@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/content_main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context="com.bz.app.MainActivity"
+    tools:showIn="@layout/app_bar_main">
+
+    <com.amap.api.maps.TextureMapView
+        android:id="@+id/map"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+    </com.amap.api.maps.TextureMapView>
+    <TextView
+        android:id="@+id/activity_main_tv_log"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_alignParentTop="true"/>
+
+    <ImageButton
+        android:id="@+id/start_record"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginBottom="10dp"
+        android:background="@drawable/starticon2"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true" />
+
+    <ImageButton
+        android:id="@+id/stop_record"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:background="@drawable/stopicon"
+        android:layout_alignParentBottom="true"
+        android:layout_toRightOf="@+id/start_record"
+        android:layout_marginLeft="35dp"
+        android:layout_marginBottom="10dp"/>
+</RelativeLayout>
