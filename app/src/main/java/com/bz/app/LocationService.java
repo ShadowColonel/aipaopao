@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
+import android.os.RemoteException;
+import android.widget.Toast;
 
 import com.amap.api.location.AMapLocation;
 import com.amap.api.location.AMapLocationClient;
@@ -29,10 +31,10 @@ public class LocationService extends Service implements AMapLocationListener {
     private LatLng endLatLng;
     private boolean isFirstLocation = true;
 
-    private LocationBinder mBinder = new LocationBinder();
+//    private LocationBinder mBinder = new LocationBinder();
     @Override
     public IBinder onBind(Intent intent) {
-        return mBinder;
+        return stub;
     }
 
     @Override
@@ -88,4 +90,29 @@ public class LocationService extends Service implements AMapLocationListener {
         super.onDestroy();
         mLocationClient.stopLocation();
     }
+
+    private IRunning.Stub stub = new IRunning.Stub() {
+        @Override
+        public void start(int type) throws RemoteException {
+            Toast.makeText(LocationService.this,"t"+type,Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        public void stop() throws RemoteException {
+
+        }
+
+        @Override
+        public void registCallback(IRunningCallback callback) throws RemoteException {
+            mCallback = callback;
+
+        }
+
+        @Override
+        public void unregistCallback(IRunningCallback callback) throws RemoteException {
+
+        }
+    };
+
+    private IRunningCallback mCallback;
 }

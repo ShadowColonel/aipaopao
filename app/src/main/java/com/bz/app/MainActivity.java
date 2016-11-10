@@ -6,6 +6,7 @@ import android.content.ServiceConnection;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.RemoteException;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -237,11 +238,16 @@ public class MainActivity extends AppCompatActivity
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.start_record:
-
-                mOption.setOnceLocation(false);
-                mOption.setInterval(5000);
-                mLocationClient.setLocationOption(mOption);
-                mLocationClient.startLocation();
+//
+//                mOption.setOnceLocation(false);
+//                mOption.setInterval(5000);
+//                mLocationClient.setLocationOption(mOption);
+//                mLocationClient.startLocation();
+                try {
+                    if (mRunning != null) mRunning.start(2);
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
                 break;
             case R.id.stop_record:
                 mLocationClient.stopLocation();
@@ -249,13 +255,20 @@ public class MainActivity extends AppCompatActivity
         }
 
     }
+    private IRunning mRunning;
 
     private ServiceConnection connection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            mLocationBinder = (LocationService.LocationBinder) service;
-            latLngs = mLocationBinder.getLocation();
-            distance = mLocationBinder.getDistance();
+//            mLocationBinder = (LocationService.LocationBinder) service;
+//            latLngs = mLocationBinder.getLocation();
+//            distance = mLocationBinder.getDistance();
+            mRunning = IRunning.Stub.asInterface(service);
+            try {
+                mRunning.registCallback(mCallback);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
         }
 
         @Override
@@ -286,4 +299,12 @@ public class MainActivity extends AppCompatActivity
             super.onBackPressed();
         }
     }
+
+    private IRunningCallback mCallback = new IRunningCallback.Stub(){
+        @Override
+        public void notify(long time) throws RemoteException {
+
+        }
+    };
+
 }
