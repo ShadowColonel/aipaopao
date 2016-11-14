@@ -1,6 +1,8 @@
 package com.bz.app;
 
+import android.app.AlertDialog;
 import android.content.ComponentName;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.graphics.Color;
@@ -17,6 +19,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -63,10 +66,9 @@ public class MainActivity extends AppCompatActivity
 
     private static final String LOG_TAG = "MainActivity";
     private TextView mLogView;
-    private ImageButton mStartRecord;
-    private ImageButton mStopRecord;
+    private Button mStartRecord;
+    private Button mStopRecord;
 
-    private LocationService.LocationBinder mLocationBinder;
     private float distance;
 
 
@@ -88,9 +90,9 @@ public class MainActivity extends AppCompatActivity
 
 
         mLogView = (TextView) findViewById(R.id.activity_main_tv_log);
-        mStartRecord = (ImageButton) findViewById(R.id.start_record);
+        mStartRecord = (Button) findViewById(R.id.start_record);
         mStartRecord.setOnClickListener(this);
-        mStopRecord = (ImageButton) findViewById(R.id.stop_record);
+        mStopRecord = (Button) findViewById(R.id.stop_record);
         mStopRecord.setOnClickListener(this);
 
         mMapView = (TextureMapView) findViewById(R.id.map);
@@ -198,9 +200,6 @@ public class MainActivity extends AppCompatActivity
         LatLng mLatLng = new LatLng(aMapLocation.getLatitude(), aMapLocation.getLongitude());
         latLngs.add(mLatLng);
 
-
-
-
         //轨迹
         aMap.addPolyline(new PolylineOptions().addAll(latLngs).width(10).color(Color.GREEN));
 
@@ -236,36 +235,35 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.start_record:
-//
-//                mOption.setOnceLocation(false);
-//                mOption.setInterval(5000);
-//                mLocationClient.setLocationOption(mOption);
-//                mLocationClient.startLocation();
-                try {
-                    if (mRunning != null) mRunning.start(2);
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
-                break;
-            case R.id.stop_record:
-                mLocationClient.stopLocation();
-                break;
+        try {
+            switch (v.getId()) {
+                case R.id.start_record:
+                    mStartRecord.setVisibility(View.GONE);
+                    mStopRecord.setVisibility(View.VISIBLE);
+                    mRunning.start();
+                    break;
+
+                case R.id.stop_record:
+                    mStartRecord.setVisibility(View.VISIBLE);
+                    mStopRecord.setVisibility(View.GONE);
+                    mRunning.stop();
+                    break;
+            }
+        } catch (RemoteException e) {
+            e.printStackTrace();
         }
 
     }
+
+
     private IRunning mRunning;
 
     private ServiceConnection connection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-//            mLocationBinder = (LocationService.LocationBinder) service;
-//            latLngs = mLocationBinder.getLocation();
-//            distance = mLocationBinder.getDistance();
             mRunning = IRunning.Stub.asInterface(service);
             try {
-                mRunning.registCallback(mCallback);
+                mRunning.registCallback(callback);
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
@@ -273,7 +271,6 @@ public class MainActivity extends AppCompatActivity
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-
         }
     };
 
@@ -296,14 +293,25 @@ public class MainActivity extends AppCompatActivity
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
-            super.onBackPressed();
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("提示");
+            builder.setMessage("后台服务正在运行，是否退出跑步");
+            builder.setPositiveButton("是", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    finish();
+                }
+            });
+            builder.setNegativeButton("否", null);
+            builder.show();
         }
     }
 
-    private IRunningCallback mCallback = new IRunningCallback.Stub(){
-        @Override
-        public void notify(long time) throws RemoteException {
 
+    private IRunningCallback callback = new IRunningCallback.Stub() {
+        @Override
+        public void notifyData(long time, float distance) throws RemoteException {
+            mLogView.setText("时间：" + time/1000.0 + "\r\n距离：" + (int)distance);
         }
     };
 

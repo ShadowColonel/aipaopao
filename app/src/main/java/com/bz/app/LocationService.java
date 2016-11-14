@@ -3,10 +3,8 @@ package com.bz.app;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Binder;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.widget.Toast;
 
 import com.amap.api.location.AMapLocation;
 import com.amap.api.location.AMapLocationClient;
@@ -15,23 +13,29 @@ import com.amap.api.location.AMapLocationListener;
 import com.amap.api.maps.AMapUtils;
 import com.amap.api.maps.model.LatLng;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 public class LocationService extends Service implements AMapLocationListener {
 
-    private List<LatLng> latLngs = new ArrayList<>();
+    private Map<Double, Double> latLngs = new HashMap<>();  //跑步轨迹集合
+    private LatLng locationLatlng;  //定位de经纬度
 
     public AMapLocationClient mLocationClient = null;
     public Context mContext = GlobalContext.getInstance();
     public AMapLocationClientOption mOption;
 
-    private float distance;
+    private long runningTime; //跑步时间
+    private float distance; //跑步距离
+    private boolean isFirstLocation = true;
     private LatLng startLatLng;
     private LatLng endLatLng;
-    private boolean isFirstLocation = true;
 
-//    private LocationBinder mBinder = new LocationBinder();
+    private static final String LOG_TAG = "LocationService";
+    private long mStartTime = -1;
+
+    private int locatioType = 1;  //定位方式，1:跑步，2:定位
+
     @Override
     public IBinder onBind(Intent intent) {
         return stub;
@@ -40,72 +44,99 @@ public class LocationService extends Service implements AMapLocationListener {
     @Override
     public void onCreate() {
         super.onCreate();
-
-        mLocationClient = new AMapLocationClient(mContext);
-        mLocationClient.setLocationListener(this);
-        initOption();
-        mLocationClient.setLocationOption(mOption);
-        mLocationClient.startLocation();
+        init();
     }
 
-    private void initOption() {
+    private void init() {
+        mLocationClient = new AMapLocationClient(mContext);
+        mLocationClient.setLocationListener(this);
+
         mOption = new AMapLocationClientOption();
-        mOption.setInterval(5000);
+        mOption.setInterval(3000);
         mOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);
+        mLocationClient.setLocationOption(mOption);
     }
 
     @Override
     public void onLocationChanged(AMapLocation aMapLocation) {
         if (aMapLocation != null) {
             if (aMapLocation.getErrorCode() == 0) {
-                LatLng mLatLng = new LatLng(aMapLocation.getLatitude(), aMapLocation.getLongitude());
-                latLngs.add(mLatLng);
+                switch (locatioType) {
+                    case 1:
+                        LatLng mLatLng = new LatLng(aMapLocation.getLatitude(), aMapLocation.getLongitude());
+                        latLngs.put(aMapLocation.getLatitude(), aMapLocation.getLongitude());
 
-                if (isFirstLocation) {
-                    startLatLng = mLatLng;
-                    endLatLng = mLatLng;
-                    isFirstLocation = false;
-                } else {
-                    startLatLng = endLatLng;
-                    endLatLng = mLatLng;
-                    float dis = AMapUtils.calculateLineDistance(startLatLng, endLatLng);
-                    distance += dis;
+                        if (isFirstLocation) {
+                            startLatLng = mLatLng;
+                            endLatLng = mLatLng;
+                            isFirstLocation = false;
+                        } else {
+                            startLatLng = endLatLng;
+                            endLatLng = mLatLng;
+                            float dis = AMapUtils.calculateLineDistance(startLatLng, endLatLng);
+                            distance += dis;
+                        }
+                        break;
+
+                    case 2:
+                        locationLatlng = new LatLng(aMapLocation.getLatitude(), aMapLocation.getLongitude());
+                        break;
                 }
+
             }
         }
     }
 
-    class LocationBinder extends Binder{
-        public List<LatLng> getLocation() {
-            return latLngs;
-        }
+    /**
+     * 开始跑步
+     */
+    private void startRunning(){
+        //开始跑步时间
+        mStartTime = System.currentTimeMillis();
+        mLocationClient.startLocation();
+    }
 
-        public float getDistance() {
-            return distance;
+    /**
+     * 结束跑步
+     */
+    private void stopRunning(){
+        //跑步总时间
+        runningTime = System.currentTimeMillis() - mStartTime;
+        mLocationClient.stopLocation();
+        try {
+            if (mCallback !=null) mCallback.notifyData(runningTime, distance);
+        } catch (RemoteException e) {
+            e.printStackTrace();
         }
     }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        mLocationClient.stopLocation();
+    /**
+     * 定位
+     */
+    private void getLocation() {
+        locatioType = 2;
+        mLocationClient.startLocation();
     }
 
     private IRunning.Stub stub = new IRunning.Stub() {
         @Override
-        public void start(int type) throws RemoteException {
-            Toast.makeText(LocationService.this,"t"+type,Toast.LENGTH_SHORT).show();
+        public void start() throws RemoteException {
+            startRunning();
         }
 
         @Override
         public void stop() throws RemoteException {
+            stopRunning();
+        }
 
+        @Override
+        public void location() throws RemoteException {
+            getLocation();
         }
 
         @Override
         public void registCallback(IRunningCallback callback) throws RemoteException {
             mCallback = callback;
-
         }
 
         @Override
@@ -113,6 +144,6 @@ public class LocationService extends Service implements AMapLocationListener {
 
         }
     };
-
     private IRunningCallback mCallback;
+
 }

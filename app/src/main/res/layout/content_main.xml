@@ -22,22 +22,23 @@
         android:layout_centerInParent="true"
         android:layout_alignParentTop="true"/>
 
-    <ImageButton
+    <Button
         android:id="@+id/start_record"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:layout_marginBottom="10dp"
-        android:background="@drawable/starticon2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Start"
+        android:textSize="12sp"
+        android:background="#00ffffff"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"/>
+
+    <Button
+        android:id="@+id/stop_record"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Stop"
+        android:textSize="12sp"
+        android:visibility="gone"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true" />
-
-    <ImageButton
-        android:id="@+id/stop_record"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:background="@drawable/stopicon"
-        android:layout_alignParentBottom="true"
-        android:layout_toRightOf="@+id/start_record"
-        android:layout_marginLeft="35dp"
-        android:layout_marginBottom="10dp"/>
 </RelativeLayout>
