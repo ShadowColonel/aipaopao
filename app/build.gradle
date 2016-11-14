@@ -28,4 +28,5 @@ dependencies {
     compile 'com.android.support:design:24.2.1'
     testCompile 'junit:junit:4.12'
     compile files('libs/AMap3DMap_4.1.2_AMapLocation_3.1.0_20161104.jar')
+    compile files('libs/gson-2.6.2.jar')
 }

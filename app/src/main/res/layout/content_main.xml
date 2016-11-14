@@ -16,11 +16,20 @@
 
     </com.amap.api.maps.TextureMapView>
     <TextView
-        android:id="@+id/activity_main_tv_log"
+        android:id="@+id/activity_main_time_tv"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:layout_alignParentTop="true"/>
+        android:layout_alignParentTop="true"
+        android:text="00:00"/>
+
+    <TextView
+        android:id="@+id/activity_main_distance_tv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_below="@+id/activity_main_time_tv"
+        android:text="距离"/>
 
     <Button
         android:id="@+id/start_record"

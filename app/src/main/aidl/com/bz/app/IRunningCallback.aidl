@@ -4,6 +4,7 @@ package com.bz.app;
 
 interface IRunningCallback {
 
-    void notifyData(long time, float distance);
-
+    void notifyTime(long time);
+    void notifyData(float distance, String latLngsStr);
+    void notifyNowLatLng(String nowLatLngStr);
 }

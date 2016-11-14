@@ -12,13 +12,15 @@ import com.amap.api.location.AMapLocationClientOption;
 import com.amap.api.location.AMapLocationListener;
 import com.amap.api.maps.AMapUtils;
 import com.amap.api.maps.model.LatLng;
+import com.google.gson.Gson;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 public class LocationService extends Service implements AMapLocationListener {
 
-    private Map<Double, Double> latLngs = new HashMap<>();  //跑步轨迹集合
+    private List<LatLng> latLngs = new ArrayList<>();  //跑步轨迹集合
     private LatLng locationLatlng;  //定位de经纬度
 
     public AMapLocationClient mLocationClient = null;
@@ -44,6 +46,7 @@ public class LocationService extends Service implements AMapLocationListener {
     @Override
     public void onCreate() {
         super.onCreate();
+
         init();
     }
 
@@ -64,7 +67,7 @@ public class LocationService extends Service implements AMapLocationListener {
                 switch (locatioType) {
                     case 1:
                         LatLng mLatLng = new LatLng(aMapLocation.getLatitude(), aMapLocation.getLongitude());
-                        latLngs.put(aMapLocation.getLatitude(), aMapLocation.getLongitude());
+                        latLngs.add(mLatLng);
 
                         if (isFirstLocation) {
                             startLatLng = mLatLng;
@@ -76,10 +79,27 @@ public class LocationService extends Service implements AMapLocationListener {
                             float dis = AMapUtils.calculateLineDistance(startLatLng, endLatLng);
                             distance += dis;
                         }
+
+                        Gson gson1 = new Gson();
+                        String latLngsStr = gson1.toJson(latLngs);
+                        try {
+                            if (mCallback !=null) mCallback.notifyData(distance, latLngsStr);
+                        } catch (RemoteException e) {
+                            e.printStackTrace();
+                        }
                         break;
 
                     case 2:
                         locationLatlng = new LatLng(aMapLocation.getLatitude(), aMapLocation.getLongitude());
+                        Gson gson2 = new Gson();
+                        String nowLatLngStr = gson2.toJson(latLngs);
+
+                        try {
+                            if (mCallback != null)
+                                mCallback.notifyNowLatLng(nowLatLngStr);
+                        } catch (RemoteException e) {
+                            e.printStackTrace();
+                        }
                         break;
                 }
 
@@ -104,7 +124,7 @@ public class LocationService extends Service implements AMapLocationListener {
         runningTime = System.currentTimeMillis() - mStartTime;
         mLocationClient.stopLocation();
         try {
-            if (mCallback !=null) mCallback.notifyData(runningTime, distance);
+            if (mCallback !=null) mCallback.notifyTime(runningTime);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
