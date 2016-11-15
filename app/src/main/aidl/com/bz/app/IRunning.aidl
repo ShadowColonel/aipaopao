@@ -7,7 +7,6 @@ interface IRunning {
 
     void start();
     void stop();
-    void location();
 
     void registCallback(IRunningCallback callback);
     void unregistCallback(IRunningCallback callback);

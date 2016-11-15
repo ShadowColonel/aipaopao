@@ -7,7 +7,9 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.os.RemoteException;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -192,11 +194,6 @@ public class MainActivity extends AppCompatActivity
             mRunning = IRunning.Stub.asInterface(service);
             try {
                 mRunning.registCallback(callback);
-                try {
-                    mRunning.location();
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
@@ -218,8 +215,6 @@ public class MainActivity extends AppCompatActivity
         super.onStart();
         Intent intent = new Intent(this, LocationService.class);
         bindService(intent, connection, BIND_AUTO_CREATE);
-
-
     }
 
         @Override
@@ -241,7 +236,6 @@ public class MainActivity extends AppCompatActivity
             builder.show();
         }
     }
-
 
     private IRunningCallback callback = new IRunningCallback.Stub() {
         @Override
@@ -273,11 +267,12 @@ public class MainActivity extends AppCompatActivity
                     mLocationMarker = aMap.addMarker(new MarkerOptions()
                     .position(nowLatLng)
                     .icon(BitmapDescriptorFactory.fromResource(R.drawable.location_marker)));
-                } else {
-                    mLocationMarker.setPosition(nowLatLng);
-                }
+            } else {
+                mLocationMarker.setPosition(nowLatLng);
+            }
 
-                aMap.animateCamera(CameraUpdateFactory.newLatLngZoom(nowLatLng, 18));
+            //每次定位移动到地图中心
+            aMap.animateCamera(CameraUpdateFactory.newLatLngZoom(nowLatLng, 18));
 
         }
     };

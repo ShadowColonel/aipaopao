@@ -15,7 +15,6 @@ import com.amap.api.maps.model.LatLng;
 import com.google.gson.Gson;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 public class LocationService extends Service implements AMapLocationListener {
@@ -35,8 +34,10 @@ public class LocationService extends Service implements AMapLocationListener {
 
     private static final String LOG_TAG = "LocationService";
     private long mStartTime = -1;
+    private IRunningCallback mCallback;
 
-    private int locatioType = 1;  //定位方式，1:跑步，2:定位
+    private boolean runningFlag = false;  //跑步标志位
+
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -46,7 +47,6 @@ public class LocationService extends Service implements AMapLocationListener {
     @Override
     public void onCreate() {
         super.onCreate();
-
         init();
     }
 
@@ -58,17 +58,27 @@ public class LocationService extends Service implements AMapLocationListener {
         mOption.setInterval(3000);
         mOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);
         mLocationClient.setLocationOption(mOption);
+        mLocationClient.startLocation();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mLocationClient.stopLocation();
     }
 
     @Override
     public void onLocationChanged(AMapLocation aMapLocation) {
         if (aMapLocation != null) {
             if (aMapLocation.getErrorCode() == 0) {
-                switch (locatioType) {
-                    case 1:
-                        LatLng mLatLng = new LatLng(aMapLocation.getLatitude(), aMapLocation.getLongitude());
-                        latLngs.add(mLatLng);
 
+                Gson gson = new Gson();
+                LatLng mLatLng = new LatLng(aMapLocation.getLatitude(), aMapLocation.getLongitude());
+
+                try {
+                    //如果是跑步，则把经纬度加入轨迹集合，计算距离
+                    if (runningFlag) {
+                        latLngs.add(mLatLng);
                         if (isFirstLocation) {
                             startLatLng = mLatLng;
                             endLatLng = mLatLng;
@@ -80,29 +90,20 @@ public class LocationService extends Service implements AMapLocationListener {
                             distance += dis;
                         }
 
-                        Gson gson1 = new Gson();
-                        String latLngsStr = gson1.toJson(latLngs);
-                        try {
-                            if (mCallback !=null) mCallback.notifyData(distance, latLngsStr);
-                        } catch (RemoteException e) {
-                            e.printStackTrace();
-                        }
-                        break;
+                        //跑步时的轨迹集合
+                        String latLngListStr = gson.toJson(latLngs);
 
-                    case 2:
-                        locationLatlng = new LatLng(aMapLocation.getLatitude(), aMapLocation.getLongitude());
-                        Gson gson2 = new Gson();
-                        String nowLatLngStr = gson2.toJson(latLngs);
+                        //把跑步距离和跑步轨迹回传给客户端
+                        if (mCallback != null) mCallback.notifyData(distance, latLngListStr);
 
-                        try {
-                            if (mCallback != null)
-                                mCallback.notifyNowLatLng(nowLatLngStr);
-                        } catch (RemoteException e) {
-                            e.printStackTrace();
-                        }
-                        break;
+                    } else {
+                        //没有跑步，把当前定位回传给客户端
+                        String nowLatLngStr = gson.toJson(mLatLng);
+                        if (mCallback != null) mCallback.notifyNowLatLng(nowLatLngStr);
+                    }
+                } catch (RemoteException e) {
+                    e.printStackTrace();
                 }
-
             }
         }
     }
@@ -110,32 +111,27 @@ public class LocationService extends Service implements AMapLocationListener {
     /**
      * 开始跑步
      */
-    private void startRunning(){
+    private void startRunning() {
         //开始跑步时间
         mStartTime = System.currentTimeMillis();
-        mLocationClient.startLocation();
+        //跑步标志位置为true
+        runningFlag = true;
     }
 
     /**
      * 结束跑步
      */
-    private void stopRunning(){
+    private void stopRunning() {
         //跑步总时间
         runningTime = System.currentTimeMillis() - mStartTime;
-        mLocationClient.stopLocation();
+        //跑步标志位置为false
+        runningFlag = false;
+
         try {
-            if (mCallback !=null) mCallback.notifyTime(runningTime);
+            if (mCallback != null) mCallback.notifyTime(runningTime);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
-    }
-
-    /**
-     * 定位
-     */
-    private void getLocation() {
-        locatioType = 2;
-        mLocationClient.startLocation();
     }
 
     private IRunning.Stub stub = new IRunning.Stub() {
@@ -150,11 +146,6 @@ public class LocationService extends Service implements AMapLocationListener {
         }
 
         @Override
-        public void location() throws RemoteException {
-            getLocation();
-        }
-
-        @Override
         public void registCallback(IRunningCallback callback) throws RemoteException {
             mCallback = callback;
         }
@@ -164,6 +155,4 @@ public class LocationService extends Service implements AMapLocationListener {
 
         }
     };
-    private IRunningCallback mCallback;
-
 }
