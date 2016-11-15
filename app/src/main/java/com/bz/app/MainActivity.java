@@ -244,37 +244,32 @@ public class MainActivity extends AppCompatActivity
         }
 
         @Override
-        public void notifyData(float distance, String latLngsStr) throws RemoteException {
+        public void notifyData(float distance, String latLngsListStr, String nowLatLngStr) throws RemoteException {
             mDistanceTV.setText("已跑路程：" + distance);
+
             Gson gson = new Gson();
-            latLngs = gson.fromJson(latLngsStr, ArrayList.class);
+            //经纬度集合，
+            latLngs = gson.fromJson(latLngsListStr, ArrayList.class);
 
-            //轨迹
-            aMap.addPolyline(new PolylineOptions().addAll(latLngs).width(10).color(Color.GREEN));
+            if (latLngs != null) {
+                //轨迹
+                aMap.addPolyline(new PolylineOptions().addAll(latLngs).width(10).color(Color.GREEN));
+            }
 
-            LatLng nowLatlng = latLngs.get(latLngs.size() - 1);
-            //每次定位移动到地图中心
-            aMap.animateCamera(CameraUpdateFactory.newLatLngZoom(nowLatlng, 18));
-
-        }
-
-        @Override
-        public void notifyNowLatLng(String nowLatLngStr) throws RemoteException {
-            Gson gson = new Gson();
+            //当前位置
             LatLng nowLatLng = gson.fromJson(nowLatLngStr, LatLng.class);
-
             if (mLocationMarker == null) {
-                    mLocationMarker = aMap.addMarker(new MarkerOptions()
-                    .position(nowLatLng)
-                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.location_marker)));
+                mLocationMarker = aMap.addMarker(new MarkerOptions()
+                        .position(nowLatLng)
+                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.location_marker)));
             } else {
                 mLocationMarker.setPosition(nowLatLng);
             }
 
             //每次定位移动到地图中心
             aMap.animateCamera(CameraUpdateFactory.newLatLngZoom(nowLatLng, 18));
-
         }
+
     };
 
 }

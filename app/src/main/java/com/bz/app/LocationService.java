@@ -20,7 +20,6 @@ import java.util.List;
 public class LocationService extends Service implements AMapLocationListener {
 
     private List<LatLng> latLngs = new ArrayList<>();  //跑步轨迹集合
-    private LatLng locationLatlng;  //定位de经纬度
 
     public AMapLocationClient mLocationClient = null;
     public Context mContext = GlobalContext.getInstance();
@@ -89,18 +88,15 @@ public class LocationService extends Service implements AMapLocationListener {
                             float dis = AMapUtils.calculateLineDistance(startLatLng, endLatLng);
                             distance += dis;
                         }
-
-                        //跑步时的轨迹集合
-                        String latLngListStr = gson.toJson(latLngs);
-
-                        //把跑步距离和跑步轨迹回传给客户端
-                        if (mCallback != null) mCallback.notifyData(distance, latLngListStr);
-
-                    } else {
-                        //没有跑步，把当前定位回传给客户端
-                        String nowLatLngStr = gson.toJson(mLatLng);
-                        if (mCallback != null) mCallback.notifyNowLatLng(nowLatLngStr);
                     }
+                    //跑步时的轨迹集合
+                    String latLngListStr = gson.toJson(latLngs);
+
+                    //没有跑步，把当前定位回传给客户端
+                    String nowLatLngStr = gson.toJson(mLatLng);
+
+                    if (mCallback != null) mCallback.notifyData(distance, latLngListStr, nowLatLngStr);
+
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }
