@@ -1,4 +1,4 @@
-package com.bz.app;
+package com.bz.app.activity;
 
 import android.app.AlertDialog;
 import android.content.ComponentName;
@@ -17,7 +17,6 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -30,33 +29,33 @@ import com.amap.api.maps.model.BitmapDescriptorFactory;
 import com.amap.api.maps.model.LatLng;
 import com.amap.api.maps.model.Marker;
 import com.amap.api.maps.model.MarkerOptions;
-import com.amap.api.maps.model.Polyline;
 import com.amap.api.maps.model.PolylineOptions;
+import com.bz.app.IRunning;
+import com.bz.app.IRunningCallback;
+import com.bz.app.service.LocationService;
+import com.bz.app.R;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, View.OnClickListener {
 
-    private TextureMapView mMapView = null;
-    private AMap aMap;
+    private TextureMapView mMapView = null;  //地图view
+    private AMap aMap;  //地图对象
     private UiSettings mUiSettings;
     private Marker mLocationMarker = null;
 
-
-
     private ArrayList<LatLng> latLngs = new ArrayList<>(); //经纬度集合
-    private Polyline polyline;
 
     private static final String LOG_TAG = "MainActivity";
-    private TextView mTimeTV;
-    private TextView mDistanceTV;
-    private Button mStartRecord;
-    private Button mStopRecord;
 
-    private float distance;
-
+    private TextView mTimeTV;  //时间
+    private TextView mDistanceTV; //距离
+    private Button mStartRecord;  //开始跑步
+    private Button mStopRecord;  //停止跑步
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,31 +86,7 @@ public class MainActivity extends AppCompatActivity
 
         aMap = mMapView.getMap();
         mUiSettings = aMap.getUiSettings();
-        mUiSettings.setCompassEnabled(true);
-        mUiSettings.setScaleControlsEnabled(true);
 
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
     }
 
     @SuppressWarnings("StatementWithEmptyBody")
@@ -126,12 +101,29 @@ public class MainActivity extends AppCompatActivity
 
         } else if (id == R.id.nav_history) {
 
+            Intent historyIntent = new Intent(this, HistoryActivity.class);
+            startActivity(historyIntent);
+
         } else if (id == R.id.nav_setting) {
 
         } else if (id == R.id.nav_help) {
 
         } else if (id == R.id.nav_about) {
 
+        } else if (id == R.id.nav_exit) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("提示");
+            builder.setMessage("是否退出应用？");
+            builder.setPositiveButton("是", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    Intent intent = new Intent(MainActivity.this, LocationService.class);
+                    stopService(intent);
+                    finish();
+                }
+            });
+            builder.setNegativeButton("否", null);
+            builder.show();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -172,7 +164,6 @@ public class MainActivity extends AppCompatActivity
                     mStopRecord.setVisibility(View.VISIBLE);
                     mRunning.start();
                     break;
-
                 case R.id.stop_record:
                     mStartRecord.setVisibility(View.VISIBLE);
                     mStopRecord.setVisibility(View.GONE);
@@ -185,7 +176,6 @@ public class MainActivity extends AppCompatActivity
 
     }
 
-
     private IRunning mRunning;
 
     private ServiceConnection connection = new ServiceConnection() {
@@ -194,6 +184,10 @@ public class MainActivity extends AppCompatActivity
             mRunning = IRunning.Stub.asInterface(service);
             try {
                 mRunning.registCallback(callback);
+                if (mRunning.isRunning()){
+                    mStartRecord.setVisibility(View.GONE);
+                    mStopRecord.setVisibility(View.VISIBLE);
+                }
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
@@ -214,8 +208,10 @@ public class MainActivity extends AppCompatActivity
     protected void onStart() {
         super.onStart();
         Intent intent = new Intent(this, LocationService.class);
+        startService(intent);
         bindService(intent, connection, BIND_AUTO_CREATE);
     }
+
 
         @Override
     public void onBackPressed() {
@@ -223,39 +219,23 @@ public class MainActivity extends AppCompatActivity
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("提示");
-            builder.setMessage("后台服务正在运行，是否退出");
-            builder.setPositiveButton("是", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    finish();
-                }
-            });
-            builder.setNegativeButton("否", null);
-            builder.show();
+            finish();
         }
     }
 
     private IRunningCallback callback = new IRunningCallback.Stub() {
         @Override
-        public void notifyTime(long time) throws RemoteException {
-            mTimeTV.setText("跑步时间：" + time/1000.0);
-        }
-
-        @Override
         public void notifyData(float distance, String latLngsListStr, String nowLatLngStr) throws RemoteException {
-            mDistanceTV.setText("已跑路程：" + distance);
-
+            mDistanceHandler.sendEmptyMessage((int) distance);
             Gson gson = new Gson();
+            Type type = new TypeToken<ArrayList<LatLng>>(){}.getType();
             //经纬度集合，
-            latLngs = gson.fromJson(latLngsListStr, ArrayList.class);
+            latLngs = gson.fromJson(latLngsListStr, type);
 
-            if (latLngs != null) {
+            if (latLngs != null && latLngs.size() > 0) {
                 //轨迹
                 aMap.addPolyline(new PolylineOptions().addAll(latLngs).width(10).color(Color.GREEN));
             }
-
             //当前位置
             LatLng nowLatLng = gson.fromJson(nowLatLngStr, LatLng.class);
             if (mLocationMarker == null) {
@@ -265,11 +245,42 @@ public class MainActivity extends AppCompatActivity
             } else {
                 mLocationMarker.setPosition(nowLatLng);
             }
-
             //每次定位移动到地图中心
             aMap.animateCamera(CameraUpdateFactory.newLatLngZoom(nowLatLng, 18));
         }
 
+        @Override
+        public void timeUpdate(long time) throws RemoteException {
+            mTimeHandler.sendEmptyMessage((int)(time / 1000));
+        }
     };
+
+    private Handler mDistanceHandler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
+            mDistanceTV.setText(msg.what + "m");
+            return false;
+        }
+    });
+
+    private Handler mTimeHandler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
+            int time = msg.what;
+            int hour = time / 3600;
+            String hourStr = String.valueOf(hour);
+            int min = time % 3600 / 60;
+            String minStr = String.valueOf(min);
+            int sec = time % 3600 % 60;
+            String secStr = String.valueOf(sec);
+
+            if (hour < 10) hourStr = "0" + hourStr;
+            if (min < 10) minStr = "0" + minStr;
+            if (sec < 10) secStr = "0" + secStr;
+
+            mTimeTV.setText(hourStr + ":" + minStr + ":" + secStr);
+            return false;
+        }
+    });
 
 }

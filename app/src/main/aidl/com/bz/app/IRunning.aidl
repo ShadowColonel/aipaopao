@@ -7,6 +7,7 @@ interface IRunning {
 
     void start();
     void stop();
+    boolean isRunning();
 
     void registCallback(IRunningCallback callback);
     void unregistCallback(IRunningCallback callback);

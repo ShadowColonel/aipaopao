@@ -2,6 +2,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <group
+        android:id="@+id/group1"
         android:checkableBehavior="single">
         <item
             android:id="@+id/nav_start"
@@ -15,11 +16,6 @@
             android:id="@+id/nav_history"
             android:icon="@drawable/history"
             android:title="历史记录" />
-
-    </group>
-
-    <group
-        android:checkableBehavior="single">
         <item
             android:id="@+id/nav_setting"
             android:icon="@drawable/setting"
@@ -33,6 +29,16 @@
             android:id="@+id/nav_about"
             android:icon="@drawable/about"
             android:title="关于" />
+
+    </group>
+
+    <group
+        android:id="@+id/group2"
+        android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_exit"
+            android:icon="@drawable/icon_exit_btn"
+            android:title="退出应用" />
     </group>
 
 </menu>
