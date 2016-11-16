@@ -1,10 +1,9 @@
 package com.bz.app.activity;
 
-import android.app.AlertDialog;
 import android.content.ComponentName;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -19,8 +18,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
+import android.widget.ToggleButton;
+
+import com.amap.api.location.AMapLocation;
 import com.amap.api.maps.AMap;
 import com.amap.api.maps.CameraUpdateFactory;
 import com.amap.api.maps.TextureMapView;
@@ -32,30 +33,38 @@ import com.amap.api.maps.model.MarkerOptions;
 import com.amap.api.maps.model.PolylineOptions;
 import com.bz.app.IRunning;
 import com.bz.app.IRunningCallback;
+import com.bz.app.database.DatabaseHelper;
+import com.bz.app.entity.RunningRecord;
 import com.bz.app.service.LocationService;
 import com.bz.app.R;
+import com.bz.app.utils.Utils;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, View.OnClickListener {
+        implements NavigationView.OnNavigationItemSelectedListener {
 
     private TextureMapView mMapView = null;  //地图view
     private AMap aMap;  //地图对象
     private UiSettings mUiSettings;
+    private PolylineOptions mPolyOptions;  //在地图上画出轨迹
+    private RunningRecord mRecord;  //一条跑步记录
     private Marker mLocationMarker = null;
-
     private ArrayList<LatLng> latLngs = new ArrayList<>(); //经纬度集合
-
-    private static final String LOG_TAG = "MainActivity";
-
     private TextView mTimeTV;  //时间
     private TextView mDistanceTV; //距离
-    private Button mStartRecord;  //开始跑步
-    private Button mStopRecord;  //停止跑步
+    private ToggleButton mRunningRecordTBtn;  //记录跑步
+    private IRunning mRunning;  //AIDL接口
+    private long mStartTime;
+    private long mEndTime;
+
+    private static final String LOG_TAG = "MainActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,20 +82,66 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-
-        mTimeTV = (TextView) findViewById(R.id.activity_main_time_tv);
-        mDistanceTV = (TextView) findViewById(R.id.activity_main_distance_tv);
-        mStartRecord = (Button) findViewById(R.id.start_record);
-        mStartRecord.setOnClickListener(this);
-        mStopRecord = (Button) findViewById(R.id.stop_record);
-        mStopRecord.setOnClickListener(this);
-
         mMapView = (TextureMapView) findViewById(R.id.map);
         mMapView.onCreate(savedInstanceState);
 
-        aMap = mMapView.getMap();
-        mUiSettings = aMap.getUiSettings();
+        init();
+        initPolyline();
 
+
+        DatabaseHelper here = new DatabaseHelper(this);
+        SQLiteDatabase db = here.getWritableDatabase();
+
+    }
+
+    private void init() {
+
+        if (aMap == null) {
+            aMap = mMapView.getMap();
+            mUiSettings = aMap.getUiSettings();
+            aMap.setMyLocationType(AMap.LOCATION_TYPE_LOCATE);
+            //地图初始缩放级别
+            aMap.moveCamera(CameraUpdateFactory.zoomTo(16));
+        }
+
+        //显示跑步计时
+        mTimeTV = (TextView) findViewById(R.id.activity_main_time_tv);
+        //显示跑步距离
+        mDistanceTV = (TextView) findViewById(R.id.activity_main_distance_tv);
+        //记录跑步按钮
+        mRunningRecordTBtn = (ToggleButton) findViewById(R.id.main_running_record);
+        mRunningRecordTBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    if (mRunningRecordTBtn.isChecked()) {
+                        aMap.clear(true);
+                        if (mRecord != null) mRecord = null;
+                        mRecord = new RunningRecord();
+                        mStartTime = System.currentTimeMillis();
+                        mRecord.setmDate(getCurrentDate(mStartTime));
+                        mRunning.start();
+
+                    } else {
+                        mRunning.stop();
+                        mEndTime = System.currentTimeMillis();
+                        saveRecord(mRecord.getmPathLinePoints(), mRecord.getmDate());
+                    }
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    //保存到数据库
+    private void saveRecord(List<AMapLocation> aMapLocations, String s) {
+    }
+
+    private void initPolyline() {
+        mPolyOptions = new PolylineOptions();
+        mPolyOptions.color(Color.GREEN);
+        mPolyOptions.width(10f);
     }
 
     @SuppressWarnings("StatementWithEmptyBody")
@@ -110,25 +165,87 @@ public class MainActivity extends AppCompatActivity
 
         } else if (id == R.id.nav_about) {
 
-        } else if (id == R.id.nav_exit) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("提示");
-            builder.setMessage("是否退出应用？");
-            builder.setPositiveButton("是", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    Intent intent = new Intent(MainActivity.this, LocationService.class);
-                    stopService(intent);
-                    finish();
-                }
-            });
-            builder.setNegativeButton("否", null);
-            builder.show();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private ServiceConnection connection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            mRunning = IRunning.Stub.asInterface(service);
+            try {
+                mRunning.registCallback(callback);
+                if (mRunning.isRunning()){
+                    mRunningRecordTBtn.setChecked(true);
+                }
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+        }
+    };
+
+    private IRunningCallback callback = new IRunningCallback.Stub() {
+        @Override
+        public void notifyData(float distance, String latLngsListStr, String nowLatLngStr) throws RemoteException {
+            mDistanceHandler.sendEmptyMessage((int) distance);
+            Gson gson = new Gson();
+            Type type = new TypeToken<ArrayList<LatLng>>(){}.getType();
+            //经纬度集合，
+            latLngs = gson.fromJson(latLngsListStr, type);
+
+            if (latLngs != null && latLngs.size() > 0) {
+                //轨迹
+                aMap.addPolyline(new PolylineOptions().addAll(latLngs).width(10).color(Color.GREEN));
+            }
+            //当前位置
+            LatLng nowLatLng = gson.fromJson(nowLatLngStr, LatLng.class);
+            if (mLocationMarker == null) {
+                mLocationMarker = aMap.addMarker(new MarkerOptions()
+                        .position(nowLatLng)
+                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.location_marker)));
+            } else {
+                mLocationMarker.setPosition(nowLatLng);
+            }
+            //每次定位移动到地图中心
+            aMap.moveCamera(CameraUpdateFactory.changeLatLng(nowLatLng));
+        }
+
+        @Override
+        public void timeUpdate(long time) throws RemoteException {
+            mTimeHandler.sendEmptyMessage((int)(time / 1000));
+        }
+    };
+
+    //更新距离
+    private Handler mDistanceHandler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
+            mDistanceTV.setText(msg.what + "m");
+            return false;
+        }
+    });
+
+    //更新时间
+    private Handler mTimeHandler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
+            mTimeTV.setText(Utils.getTimeStr(msg.what));
+            return false;
+        }
+    });
+
+    private String getCurrentDate(long time) {
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss ");
+        Date curDate = new Date(time);
+        String date = format.format(curDate);
+        return date;
     }
 
     @Override
@@ -156,49 +273,6 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onClick(View v) {
-        try {
-            switch (v.getId()) {
-                case R.id.start_record:
-                    mStartRecord.setVisibility(View.GONE);
-                    mStopRecord.setVisibility(View.VISIBLE);
-                    mRunning.start();
-                    break;
-                case R.id.stop_record:
-                    mStartRecord.setVisibility(View.VISIBLE);
-                    mStopRecord.setVisibility(View.GONE);
-                    mRunning.stop();
-                    break;
-            }
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    private IRunning mRunning;
-
-    private ServiceConnection connection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            mRunning = IRunning.Stub.asInterface(service);
-            try {
-                mRunning.registCallback(callback);
-                if (mRunning.isRunning()){
-                    mStartRecord.setVisibility(View.GONE);
-                    mStopRecord.setVisibility(View.VISIBLE);
-                }
-            } catch (RemoteException e) {
-                e.printStackTrace();
-            }
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-        }
-    };
-
-    @Override
     protected void onStop() {
         super.onStop();
         unbindService(connection);
@@ -212,8 +286,7 @@ public class MainActivity extends AppCompatActivity
         bindService(intent, connection, BIND_AUTO_CREATE);
     }
 
-
-        @Override
+    @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
@@ -222,65 +295,5 @@ public class MainActivity extends AppCompatActivity
             finish();
         }
     }
-
-    private IRunningCallback callback = new IRunningCallback.Stub() {
-        @Override
-        public void notifyData(float distance, String latLngsListStr, String nowLatLngStr) throws RemoteException {
-            mDistanceHandler.sendEmptyMessage((int) distance);
-            Gson gson = new Gson();
-            Type type = new TypeToken<ArrayList<LatLng>>(){}.getType();
-            //经纬度集合，
-            latLngs = gson.fromJson(latLngsListStr, type);
-
-            if (latLngs != null && latLngs.size() > 0) {
-                //轨迹
-                aMap.addPolyline(new PolylineOptions().addAll(latLngs).width(10).color(Color.GREEN));
-            }
-            //当前位置
-            LatLng nowLatLng = gson.fromJson(nowLatLngStr, LatLng.class);
-            if (mLocationMarker == null) {
-                mLocationMarker = aMap.addMarker(new MarkerOptions()
-                        .position(nowLatLng)
-                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.location_marker)));
-            } else {
-                mLocationMarker.setPosition(nowLatLng);
-            }
-            //每次定位移动到地图中心
-            aMap.animateCamera(CameraUpdateFactory.newLatLngZoom(nowLatLng, 18));
-        }
-
-        @Override
-        public void timeUpdate(long time) throws RemoteException {
-            mTimeHandler.sendEmptyMessage((int)(time / 1000));
-        }
-    };
-
-    private Handler mDistanceHandler = new Handler(new Handler.Callback() {
-        @Override
-        public boolean handleMessage(Message msg) {
-            mDistanceTV.setText(msg.what + "m");
-            return false;
-        }
-    });
-
-    private Handler mTimeHandler = new Handler(new Handler.Callback() {
-        @Override
-        public boolean handleMessage(Message msg) {
-            int time = msg.what;
-            int hour = time / 3600;
-            String hourStr = String.valueOf(hour);
-            int min = time % 3600 / 60;
-            String minStr = String.valueOf(min);
-            int sec = time % 3600 % 60;
-            String secStr = String.valueOf(sec);
-
-            if (hour < 10) hourStr = "0" + hourStr;
-            if (min < 10) minStr = "0" + minStr;
-            if (sec < 10) secStr = "0" + secStr;
-
-            mTimeTV.setText(hourStr + ":" + minStr + ":" + secStr);
-            return false;
-        }
-    });
 
 }

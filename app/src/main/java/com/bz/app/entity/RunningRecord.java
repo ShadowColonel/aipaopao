@@ -1,85 +1,103 @@
 package com.bz.app.entity;
 
-import android.os.Parcel;
-import android.os.Parcelable;
+import com.amap.api.location.AMapLocation;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by ThinkPad User on 2016/11/15.
+ * 一条跑步轨迹，包括了起点，终点，轨迹中间点，距离，跑步用，速度，开始时间
  */
 
-public class RunningRecord implements Parcelable {
+public class RunningRecord {
 
-    private float distance;  //距离
-    private String totalTime;  //跑步时间
-    private String startTime;  //开始时间
+    private AMapLocation mStartPoint;
+    private AMapLocation mEndPoint;
+    private List<AMapLocation> mPathLinePoints = new ArrayList<>();
+    private String mDistance;
+    private String mDuration;
+    private String mAveragespeed;
+    private String mDate;
+    private int mId = 0;
 
-    public RunningRecord(float distance, String totalTime, String startTime) {
-        this.distance = distance;
-        this.totalTime = totalTime;
-        this.startTime = startTime;
+    public RunningRecord() {
     }
 
-    public float getDistance() {
-        return distance;
+    public int getmId() {
+        return mId;
     }
 
-    public void setDistance(float distance) {
-        this.distance = distance;
+    public void setmId(int mId) {
+        this.mId = mId;
     }
 
-    public String getTotalTime() {
-        return totalTime;
+    public AMapLocation getmStartPoint() {
+        return mStartPoint;
     }
 
-    public void setTotalTime(String totalTime) {
-        this.totalTime = totalTime;
+    public void setmStartPoint(AMapLocation mStartPoint) {
+        this.mStartPoint = mStartPoint;
     }
 
-    public String getStartTime() {
-        return startTime;
+    public AMapLocation getmEndPoint() {
+        return mEndPoint;
     }
 
-    public void setStartTime(String startTime) {
-        this.startTime = startTime;
+    public void setmEndPoint(AMapLocation mEndPoint) {
+        this.mEndPoint = mEndPoint;
+    }
+
+    public List<AMapLocation> getmPathLinePoints() {
+        return mPathLinePoints;
+    }
+
+    public void setmPathLinePoints(List<AMapLocation> mPathLinePoints) {
+        this.mPathLinePoints = mPathLinePoints;
+    }
+
+    public String getmDistance() {
+        return mDistance;
+    }
+
+    public void setmDistance(String mDistance) {
+        this.mDistance = mDistance;
+    }
+
+    public String getmDuration() {
+        return mDuration;
+    }
+
+    public void setmDuration(String mDuration) {
+        this.mDuration = mDuration;
+    }
+
+    public String getmAveragespeed() {
+        return mAveragespeed;
+    }
+
+    public void setmAveragespeed(String mAveragespeed) {
+        this.mAveragespeed = mAveragespeed;
+    }
+
+    public String getmDate() {
+        return mDate;
+    }
+
+    public void setmDate(String mDate) {
+        this.mDate = mDate;
+    }
+
+    public void addPoint(AMapLocation point) {
+        mPathLinePoints.add(point);
     }
 
     @Override
     public String toString() {
-        return "RunningRecord{" +
-                "distance=" + distance +
-                ", totalTime='" + totalTime + '\'' +
-                ", startTime='" + startTime + '\'' +
-                '}';
+        StringBuilder record = new StringBuilder();
+        record.append("recordsize:" + getmPathLinePoints().size() + ",");
+        record.append("distance:" + getmDistance() + "m,");
+        record.append("duration:" + getmDuration() + "s");
+        return record.toString();
     }
-
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeFloat(this.distance);
-        dest.writeString(this.totalTime);
-        dest.writeString(this.startTime);
-    }
-
-    protected RunningRecord(Parcel in) {
-        this.distance = in.readFloat();
-        this.totalTime = in.readString();
-        this.startTime = in.readString();
-    }
-
-    public static final Parcelable.Creator<RunningRecord> CREATOR = new Parcelable.Creator<RunningRecord>() {
-        @Override
-        public RunningRecord createFromParcel(Parcel source) {
-            return new RunningRecord(source);
-        }
-
-        @Override
-        public RunningRecord[] newArray(int size) {
-            return new RunningRecord[size];
-        }
-    };
 }

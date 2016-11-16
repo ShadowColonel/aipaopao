@@ -1,4 +1,4 @@
-package com.bz.app;
+package com.bz.app.utils;
 
 import android.app.Application;
 
