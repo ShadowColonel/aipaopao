@@ -15,6 +15,7 @@ import java.util.List;
  * Created by ThinkPad User on 2016/11/16.
  * database adapter 数据库增删改查
  * remote
+ * 三个分支 ， 头都搞大了
  */
 
 public class DBAdapter  {
