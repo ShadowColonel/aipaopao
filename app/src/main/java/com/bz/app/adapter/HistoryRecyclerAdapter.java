@@ -10,6 +10,8 @@ import android.widget.TextView;
 import com.bz.app.R;
 import com.bz.app.entity.RunningRecord;
 
+import org.w3c.dom.Text;
+
 import java.util.List;
 
 
@@ -39,7 +41,8 @@ public class HistoryRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         RunningRecord record = historyList.get(position);
         ItemViewHolder itemViewHolder = (ItemViewHolder) holder;
-        itemViewHolder.distance.setText(record.getDistance() + "");
+        itemViewHolder.date.setText(record.getDate());
+        itemViewHolder.record.setText(record.toString());
     }
 
     @Override
@@ -49,15 +52,13 @@ public class HistoryRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     class ItemViewHolder extends RecyclerView.ViewHolder {
 
-        TextView distance;
-        TextView totalTime;
-        TextView startTime;
+        TextView date;
+        TextView record;
 
         public ItemViewHolder(View itemView) {
             super(itemView);
-            distance = (TextView) itemView.findViewById(R.id.item_running_record_distance);
-            totalTime = (TextView) itemView.findViewById(R.id.item_running_record_totalTime);
-            startTime = (TextView) itemView.findViewById(R.id.item_running_record_startTime);
+            date = (TextView) itemView.findViewById(R.id.item_history_date);
+            record = (TextView) itemView.findViewById(R.id.item_history_record);
         }
     }
 }

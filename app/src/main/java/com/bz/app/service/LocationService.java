@@ -11,6 +11,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.RemoteException;
 import android.support.v7.app.NotificationCompat;
+import android.util.Log;
 
 import com.amap.api.location.AMapLocation;
 import com.amap.api.location.AMapLocationClient;
@@ -30,7 +31,7 @@ import java.util.List;
 
 public class LocationService extends Service implements AMapLocationListener {
 
-    private List<LatLng> latLngs = new ArrayList<>();  //跑步轨迹集合
+    private List<LatLng> list = new ArrayList<>();  //跑步轨迹集合
     public AMapLocationClient mLocationClient = null;
     public Context mContext = GlobalContext.getInstance();
     public AMapLocationClientOption mOption;
@@ -53,16 +54,16 @@ public class LocationService extends Service implements AMapLocationListener {
         super.onCreate();
         init();
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(mContext);
-        Intent notificationIntent = new Intent(this, MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
-        builder.setSmallIcon(R.drawable.location_marker);
-        builder.setContentTitle("正在跑步...");
-        builder.setContentText("时间：  距离：  ");
-        builder.setContentIntent(pendingIntent);
-
-        Notification notification = builder.build();
-        startForeground(1, notification);
+//        NotificationCompat.Builder builder = new NotificationCompat.Builder(mContext);
+//        Intent notificationIntent = new Intent(this, MainActivity.class);
+//        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+//        builder.setSmallIcon(R.drawable.location_marker);
+//        builder.setContentTitle("正在跑步...");
+//        builder.setContentText("时间：  距离：  ");
+//        builder.setContentIntent(pendingIntent);
+//
+//        Notification notification = builder.build();
+//        startForeground(1, notification);
     }
 
     private void init() {
@@ -92,24 +93,20 @@ public class LocationService extends Service implements AMapLocationListener {
                 LatLng mLatLng = new LatLng(aMapLocation.getLatitude(), aMapLocation.getLongitude());
 
                 try {
-                    //如果是跑步，则把经纬度加入轨迹集合，计算距离
+                    //如果是跑步，则把location加入集合，计算距离
                     if (mIsRunning) {
-                        latLngs.add(mLatLng);
+                        list.add(mLatLng);
                         if (startLatLng != null) {
                             float dis = AMapUtils.calculateLineDistance(startLatLng, mLatLng);
                             distance += dis;
                         }
                         startLatLng = mLatLng;
                     }
-
                     //跑步时的轨迹集合
-                    String latLngListStr = gson.toJson(latLngs);
-
-                    //没有跑步，把当前定位回传给客户端
+                    String latLngListStr = gson.toJson(list);
+                    //未跑步时的定位
                     String nowLatLngStr = gson.toJson(mLatLng);
-
                     if (mCallback != null) mCallback.notifyData(distance, latLngListStr, nowLatLngStr);
-
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }
@@ -123,6 +120,8 @@ public class LocationService extends Service implements AMapLocationListener {
     private void startRunning() {
         //开始跑步时间
         mStartTime = System.currentTimeMillis();
+        list.clear();
+        distance = 0f;
         //跑步标志位置为true
         mIsRunning = true;
         mTimeHandler.sendEmptyMessage(0);

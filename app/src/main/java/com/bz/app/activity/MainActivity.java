@@ -3,7 +3,6 @@ package com.bz.app.activity;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -16,16 +15,17 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.amap.api.location.AMapLocation;
 import com.amap.api.maps.AMap;
 import com.amap.api.maps.CameraUpdateFactory;
 import com.amap.api.maps.TextureMapView;
-import com.amap.api.maps.UiSettings;
 import com.amap.api.maps.model.BitmapDescriptorFactory;
 import com.amap.api.maps.model.LatLng;
 import com.amap.api.maps.model.Marker;
@@ -33,7 +33,7 @@ import com.amap.api.maps.model.MarkerOptions;
 import com.amap.api.maps.model.PolylineOptions;
 import com.bz.app.IRunning;
 import com.bz.app.IRunningCallback;
-import com.bz.app.database.DatabaseHelper;
+import com.bz.app.database.DBAdapter;
 import com.bz.app.entity.RunningRecord;
 import com.bz.app.service.LocationService;
 import com.bz.app.R;
@@ -52,17 +52,17 @@ public class MainActivity extends AppCompatActivity
 
     private TextureMapView mMapView = null;  //地图view
     private AMap aMap;  //地图对象
-    private UiSettings mUiSettings;
     private PolylineOptions mPolyOptions;  //在地图上画出轨迹
     private RunningRecord mRecord;  //一条跑步记录
     private Marker mLocationMarker = null;
-    private ArrayList<LatLng> latLngs = new ArrayList<>(); //经纬度集合
     private TextView mTimeTV;  //时间
     private TextView mDistanceTV; //距离
     private ToggleButton mRunningRecordTBtn;  //记录跑步
     private IRunning mRunning;  //AIDL接口
     private long mStartTime;
-    private long mEndTime;
+    private int mDistance;  //多少米
+    private int mDuration;  //多少秒
+    private DBAdapter mDBAdapter;
 
     private static final String LOG_TAG = "MainActivity";
 
@@ -87,21 +87,17 @@ public class MainActivity extends AppCompatActivity
 
         init();
         initPolyline();
-
-
-        DatabaseHelper here = new DatabaseHelper(this);
-        SQLiteDatabase db = here.getWritableDatabase();
-
     }
 
     private void init() {
 
         if (aMap == null) {
             aMap = mMapView.getMap();
-            mUiSettings = aMap.getUiSettings();
             aMap.setMyLocationType(AMap.LOCATION_TYPE_LOCATE);
             //地图初始缩放级别
             aMap.moveCamera(CameraUpdateFactory.zoomTo(16));
+            mLocationMarker = aMap.addMarker(new MarkerOptions()
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.location_marker)));
         }
 
         //显示跑步计时
@@ -124,7 +120,6 @@ public class MainActivity extends AppCompatActivity
 
                     } else {
                         mRunning.stop();
-                        mEndTime = System.currentTimeMillis();
                         saveRecord(mRecord.getPathLinePoints(), mRecord.getDate());
                     }
                 } catch (RemoteException e) {
@@ -135,13 +130,57 @@ public class MainActivity extends AppCompatActivity
     }
 
     //保存到数据库
-    private void saveRecord(List<AMapLocation> aMapLocations, String s) {
+    protected void saveRecord(List<LatLng> list, String time) {
+        if (list.size() > 0) {
+            mDBAdapter = new DBAdapter(this);
+            mDBAdapter.open();
+            LatLng firstLocation = list.get(0);
+            LatLng lastLocation = list.get(list.size() - 1);
+
+            String startPoint = latLngToString(firstLocation);
+            String endPoint = latLngToString(lastLocation);
+            String pathLinePoints = getPathLineString(list);
+            String distance = String.valueOf(mDistance);
+            String duration = Utils.getTimeStr(mDuration);
+            String average_speed = String.valueOf(mDistance / (float) mDuration);
+            mDBAdapter.insertRecord(startPoint, endPoint, pathLinePoints, distance,
+                    duration, average_speed, time);
+            mDBAdapter.close();
+        } else {
+            Toast.makeText(MainActivity.this, "没有记录到数据库", Toast.LENGTH_SHORT).show();
+        }
+
     }
 
+    //将经纬度集合，转换为string
+    private String getPathLineString(List<LatLng> list) {
+        StringBuffer pathLine = new StringBuffer();
+
+        for (int i = 1; i < list.size() - 1; i++) {
+            pathLine.append(latLngToString(list.get(i))).append(";");
+        }
+        return pathLine.toString();
+    }
+
+    //将经纬度对象，转换为string
+    private String latLngToString(LatLng latLng) {
+        StringBuffer sb = new StringBuffer();
+        sb.append(latLng.latitude).append(",");
+        sb.append(latLng.longitude).append(",");
+        return sb.toString();
+    }
+
+    //初始化地图轨迹线
     private void initPolyline() {
         mPolyOptions = new PolylineOptions();
         mPolyOptions.color(Color.GREEN);
         mPolyOptions.width(10f);
+    }
+
+    //在地图上画线
+    private void drawLine() {
+        aMap.clear(true);
+        aMap.addPolyline(mPolyOptions);
     }
 
     @SuppressWarnings("StatementWithEmptyBody")
@@ -190,31 +229,35 @@ public class MainActivity extends AppCompatActivity
         public void onServiceDisconnected(ComponentName name) {
         }
     };
-
+    int j = 0;
     private IRunningCallback callback = new IRunningCallback.Stub() {
         @Override
-        public void notifyData(float distance, String latLngsListStr, String nowLatLngStr) throws RemoteException {
+        public void notifyData(float distance, String latLngListStr, String nowLatLngStr) throws RemoteException {
             mDistanceHandler.sendEmptyMessage((int) distance);
-            Gson gson = new Gson();
-            Type type = new TypeToken<ArrayList<LatLng>>(){}.getType();
-            //经纬度集合，
-            latLngs = gson.fromJson(latLngsListStr, type);
 
-            if (latLngs != null && latLngs.size() > 0) {
-                //轨迹
-                aMap.addPolyline(new PolylineOptions().addAll(latLngs).width(10).color(Color.GREEN));
+            Type type = new TypeToken<ArrayList<LatLng>>(){}.getType();
+            //location集合
+            Gson gson = new Gson();
+            ArrayList<LatLng> locationList = gson.fromJson(latLngListStr, type);
+
+            if (locationList.size() > 0) {
+//                Log.e(LOG_TAG, "i-->" + (j++));
+//                mRecord.setPathLinePoints(locationList);
+
+                //地图上的轨迹
+                for (int i = 0; i < locationList.size(); i++) {
+                    mPolyOptions.add(locationList.get(i));
+                }
+                drawLine();
             }
-            //当前位置
+
+            //当前定位
             LatLng nowLatLng = gson.fromJson(nowLatLngStr, LatLng.class);
-            if (mLocationMarker == null) {
-                mLocationMarker = aMap.addMarker(new MarkerOptions()
-                        .position(nowLatLng)
-                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.location_marker)));
-            } else {
-                mLocationMarker.setPosition(nowLatLng);
-            }
+            Log.v(LOG_TAG, "nowLatLng--->" + nowLatLng.latitude + "," + nowLatLng.longitude);
+            mLocationMarker.setPosition(nowLatLng);
             //每次定位移动到地图中心
             aMap.moveCamera(CameraUpdateFactory.changeLatLng(nowLatLng));
+
         }
 
         @Override
@@ -227,6 +270,7 @@ public class MainActivity extends AppCompatActivity
     private Handler mDistanceHandler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
+            mDistance = msg.what;
             mDistanceTV.setText(msg.what + "m");
             return false;
         }
@@ -236,11 +280,13 @@ public class MainActivity extends AppCompatActivity
     private Handler mTimeHandler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
+            mDuration = msg.what;
             mTimeTV.setText(Utils.getTimeStr(msg.what));
             return false;
         }
     });
 
+    //格式化当前日期
     private String getCurrentDate(long time) {
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss ");
         Date curDate = new Date(time);
@@ -275,6 +321,11 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onStop() {
         super.onStop();
+        try {
+            mRunning.unregistCallback(callback);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
         unbindService(connection);
     }
 

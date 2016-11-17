@@ -1,7 +1,9 @@
 package com.bz.app.entity;
 
 import com.amap.api.location.AMapLocation;
+import com.amap.api.maps.model.LatLng;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,9 +14,9 @@ import java.util.List;
 
 public class RunningRecord {
 
-    private AMapLocation startPoint;
-    private AMapLocation endPoint;
-    private List<AMapLocation> pathLinePoints = new ArrayList<>();
+    private LatLng startPoint;
+    private LatLng endPoint;
+    private List<LatLng> pathLinePoints = new ArrayList<>();
     private String distance;
     private String duration;
     private String averageSpeed;
@@ -32,27 +34,27 @@ public class RunningRecord {
         this.id = id;
     }
 
-    public AMapLocation getStartPoint() {
+    public LatLng getStartPoint() {
         return startPoint;
     }
 
-    public void setStartPoint(AMapLocation startPoint) {
+    public void setStartPoint(LatLng startPoint) {
         this.startPoint = startPoint;
     }
 
-    public AMapLocation getEndPoint() {
+    public LatLng getEndPoint() {
         return endPoint;
     }
 
-    public void setEndPoint(AMapLocation endPoint) {
+    public void setEndPoint(LatLng endPoint) {
         this.endPoint = endPoint;
     }
 
-    public List<AMapLocation> getPathLinePoints() {
+    public List<LatLng> getPathLinePoints() {
         return pathLinePoints;
     }
 
-    public void setPathLinePoints(List<AMapLocation> pathLinePoints) {
+    public void setPathLinePoints(ArrayList<LatLng> pathLinePoints) {
         this.pathLinePoints = pathLinePoints;
     }
 
@@ -88,7 +90,7 @@ public class RunningRecord {
         this.date = date;
     }
 
-    public void addPoint(AMapLocation point) {
+    public void addPoint(LatLng point) {
         pathLinePoints.add(point);
     }
 
@@ -97,7 +99,7 @@ public class RunningRecord {
         StringBuilder record = new StringBuilder();
         record.append("recordsize:" + getPathLinePoints().size() + ",");
         record.append("distance:" + getDistance() + "m,");
-        record.append("duration:" + getDuration() + "s");
+        record.append("duration:" + getDuration());
         return record.toString();
     }
 }

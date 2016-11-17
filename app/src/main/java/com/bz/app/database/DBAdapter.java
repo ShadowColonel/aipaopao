@@ -7,15 +7,15 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import com.bz.app.entity.RunningRecord;
+import com.bz.app.utils.Utils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * Created by ThinkPad User on 2016/11/16.
  * database adapter 数据库增删改查
- * remote
- * 三个分支 ， 头都搞大了
  */
 
 public class DBAdapter  {
@@ -94,14 +94,22 @@ public class DBAdapter  {
      */
     public List<RunningRecord> queryAllRecord() {
         List<RunningRecord> allRecord = new ArrayList<>();
-        Cursor cursor = db.query(RECORD_TABLE, new String[]{"start_point", "end_point", "path_line"
+        Cursor cursor = db.query(RECORD_TABLE, new String[]{"id", "start_point", "end_point", "path_line"
         , "distance", "duration", "average_speed", "date"}, null, null, null, null, null);
 
         while (cursor.moveToNext()) {
             RunningRecord record = new RunningRecord();
             record.setId(cursor.getInt(cursor.getColumnIndex("id")));
+            record.setStartPoint(Utils.parseLatLng(cursor.getString(cursor.getColumnIndex("start_point"))));
+            record.setEndPoint(Utils.parseLatLng(cursor.getString(cursor.getColumnIndex("end_point"))));
+            record.setPathLinePoints(Utils.parseLatLngs(cursor.getString(cursor.getColumnIndex("path_line"))));
+            record.setDistance(cursor.getString(cursor.getColumnIndex("distance")));
+            record.setDuration(cursor.getString(cursor.getColumnIndex("duration")));
+            record.setAverageSpeed(cursor.getString(cursor.getColumnIndex("average_speed")));
+            record.setDate(cursor.getString(cursor.getColumnIndex("date")));
+            allRecord.add(record);
         }
-
+        Collections.reverse(allRecord);
         return allRecord;
     }
 }
