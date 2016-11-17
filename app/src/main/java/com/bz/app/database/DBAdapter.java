@@ -87,6 +87,10 @@ public class DBAdapter  {
         return db.insert(RECORD_TABLE, null, values);
     }
 
+    /**
+     * 查询所有轨迹
+     * @return
+     */
     public List<RunningRecord> queryAllRecord() {
         List<RunningRecord> allRecord = new ArrayList<>();
         Cursor cursor = db.query(RECORD_TABLE, new String[]{"start_point", "end_point", "path_line"
@@ -94,7 +98,7 @@ public class DBAdapter  {
 
         while (cursor.moveToNext()) {
             RunningRecord record = new RunningRecord();
-            record.setmId(cursor.getInt(cursor.getColumnIndex("id")));
+            record.setId(cursor.getInt(cursor.getColumnIndex("id")));
         }
 
         return allRecord;

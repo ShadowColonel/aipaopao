@@ -40,8 +40,6 @@ public class HistoryRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         RunningRecord record = historyList.get(position);
         ItemViewHolder itemViewHolder = (ItemViewHolder) holder;
         itemViewHolder.distance.setText(record.getDistance() + "");
-        itemViewHolder.totalTime.setText(record.getTotalTime());
-        itemViewHolder.startTime.setText(record.getStartTime());
     }
 
     @Override

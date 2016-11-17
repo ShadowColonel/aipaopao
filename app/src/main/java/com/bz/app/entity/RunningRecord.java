@@ -12,92 +12,92 @@ import java.util.List;
 
 public class RunningRecord {
 
-    private AMapLocation mStartPoint;
-    private AMapLocation mEndPoint;
-    private List<AMapLocation> mPathLinePoints = new ArrayList<>();
-    private String mDistance;
-    private String mDuration;
-    private String mAveragespeed;
-    private String mDate;
-    private int mId = 0;
+    private AMapLocation startPoint;
+    private AMapLocation endPoint;
+    private List<AMapLocation> pathLinePoints = new ArrayList<>();
+    private String distance;
+    private String duration;
+    private String averageSpeed;
+    private String date;
+    private int id = 0;
 
     public RunningRecord() {
     }
 
-    public int getmId() {
-        return mId;
+    public int getId() {
+        return id;
     }
 
-    public void setmId(int mId) {
-        this.mId = mId;
+    public void setId(int id) {
+        this.id = id;
     }
 
-    public AMapLocation getmStartPoint() {
-        return mStartPoint;
+    public AMapLocation getStartPoint() {
+        return startPoint;
     }
 
-    public void setmStartPoint(AMapLocation mStartPoint) {
-        this.mStartPoint = mStartPoint;
+    public void setStartPoint(AMapLocation startPoint) {
+        this.startPoint = startPoint;
     }
 
-    public AMapLocation getmEndPoint() {
-        return mEndPoint;
+    public AMapLocation getEndPoint() {
+        return endPoint;
     }
 
-    public void setmEndPoint(AMapLocation mEndPoint) {
-        this.mEndPoint = mEndPoint;
+    public void setEndPoint(AMapLocation endPoint) {
+        this.endPoint = endPoint;
     }
 
-    public List<AMapLocation> getmPathLinePoints() {
-        return mPathLinePoints;
+    public List<AMapLocation> getPathLinePoints() {
+        return pathLinePoints;
     }
 
-    public void setmPathLinePoints(List<AMapLocation> mPathLinePoints) {
-        this.mPathLinePoints = mPathLinePoints;
+    public void setPathLinePoints(List<AMapLocation> pathLinePoints) {
+        this.pathLinePoints = pathLinePoints;
     }
 
-    public String getmDistance() {
-        return mDistance;
+    public String getDistance() {
+        return distance;
     }
 
-    public void setmDistance(String mDistance) {
-        this.mDistance = mDistance;
+    public void setDistance(String distance) {
+        this.distance = distance;
     }
 
-    public String getmDuration() {
-        return mDuration;
+    public String getDuration() {
+        return duration;
     }
 
-    public void setmDuration(String mDuration) {
-        this.mDuration = mDuration;
+    public void setDuration(String duration) {
+        this.duration = duration;
     }
 
-    public String getmAveragespeed() {
-        return mAveragespeed;
+    public String getAverageSpeed() {
+        return averageSpeed;
     }
 
-    public void setmAveragespeed(String mAveragespeed) {
-        this.mAveragespeed = mAveragespeed;
+    public void setAverageSpeed(String averageSpeed) {
+        this.averageSpeed = averageSpeed;
     }
 
-    public String getmDate() {
-        return mDate;
+    public String getDate() {
+        return date;
     }
 
-    public void setmDate(String mDate) {
-        this.mDate = mDate;
+    public void setDate(String date) {
+        this.date = date;
     }
 
     public void addPoint(AMapLocation point) {
-        mPathLinePoints.add(point);
+        pathLinePoints.add(point);
     }
 
     @Override
     public String toString() {
         StringBuilder record = new StringBuilder();
-        record.append("recordsize:" + getmPathLinePoints().size() + ",");
-        record.append("distance:" + getmDistance() + "m,");
-        record.append("duration:" + getmDuration() + "s");
+        record.append("recordsize:" + getPathLinePoints().size() + ",");
+        record.append("distance:" + getDistance() + "m,");
+        record.append("duration:" + getDuration() + "s");
         return record.toString();
     }
 }

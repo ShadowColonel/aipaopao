@@ -119,13 +119,13 @@ public class MainActivity extends AppCompatActivity
                         if (mRecord != null) mRecord = null;
                         mRecord = new RunningRecord();
                         mStartTime = System.currentTimeMillis();
-                        mRecord.setmDate(getCurrentDate(mStartTime));
+                        mRecord.setDate(getCurrentDate(mStartTime));
                         mRunning.start();
 
                     } else {
                         mRunning.stop();
                         mEndTime = System.currentTimeMillis();
-                        saveRecord(mRecord.getmPathLinePoints(), mRecord.getmDate());
+                        saveRecord(mRecord.getPathLinePoints(), mRecord.getDate());
                     }
                 } catch (RemoteException e) {
                     e.printStackTrace();
