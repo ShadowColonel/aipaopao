@@ -1,11 +1,16 @@
 package com.bz.app.service;
 
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.PorterDuff;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -21,12 +26,17 @@ import com.amap.api.maps.AMapUtils;
 import com.amap.api.maps.model.LatLng;
 import com.bz.app.R;
 import com.bz.app.activity.MainActivity;
+import com.bz.app.database.DBAdapter;
+import com.bz.app.entity.RunningRecord;
 import com.bz.app.utils.GlobalContext;
 import com.bz.app.IRunning;
 import com.bz.app.IRunningCallback;
+import com.bz.app.utils.Utils;
 import com.google.gson.Gson;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class LocationService extends Service implements AMapLocationListener {
@@ -37,9 +47,18 @@ public class LocationService extends Service implements AMapLocationListener {
     public AMapLocationClientOption mOption;
     private float distance; //跑步距离
     private LatLng startLatLng = null;
-    private long mStartTime = -1;
+    private long mStartTime = -1;  //开始跑步时间
+    private long time;
     private IRunningCallback mCallback;
     private boolean mIsRunning = false;  //跑步标志位
+    private RunningRecord mRecord;  //一条跑步记录
+    private DBAdapter mDBAdapter;  //数据库操作
+    private Notification notification; //通知
+    private NotificationManager notificationManager; //管理通知
+    private NotificationCompat.Builder builder;  //创建通知
+    private boolean mIsShowNotification = false;  //是否显示通知
+
+
 
     private static final String LOG_TAG = "LocationService";
 
@@ -53,27 +72,32 @@ public class LocationService extends Service implements AMapLocationListener {
     public void onCreate() {
         super.onCreate();
         init();
-
-//        NotificationCompat.Builder builder = new NotificationCompat.Builder(mContext);
-//        Intent notificationIntent = new Intent(this, MainActivity.class);
-//        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
-//        builder.setSmallIcon(R.drawable.location_marker);
-//        builder.setContentTitle("正在跑步...");
-//        builder.setContentText("时间：  距离：  ");
-//        builder.setContentIntent(pendingIntent);
-//
-//        Notification notification = builder.build();
-//        startForeground(1, notification);
     }
 
     private void init() {
         mLocationClient = new AMapLocationClient(mContext);
         mLocationClient.setLocationListener(this);
 
+        SharedPreferences pref = getSharedPreferences("modeData", MODE_PRIVATE);
+        int locationMode = pref.getInt("locationMode", 1);
+        Log.v(LOG_TAG, "locationMode------->" + locationMode);
         //定位参数
         mOption = new AMapLocationClientOption();
-        mOption.setInterval(2000);
-        mOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);
+        mOption.setInterval(3000);
+        switch (locationMode) {
+            case 1:
+                mOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);
+                break;
+            case 2:
+                mOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Battery_Saving);
+                break;
+            case 3:
+                mOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Device_Sensors);
+                break;
+            default:
+                mOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);
+                break;
+        }
         mLocationClient.setLocationOption(mOption);
         mLocationClient.startLocation();
     }
@@ -101,6 +125,13 @@ public class LocationService extends Service implements AMapLocationListener {
                             distance += dis;
                         }
                         startLatLng = mLatLng;
+
+                        if (mIsShowNotification) {
+                            notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                            builder.setContentText(getNotificationContent());
+                            notification = builder.build();
+                            notificationManager.notify(1, notification);
+                        }
                     }
                     //跑步时的轨迹集合
                     String latLngListStr = gson.toJson(list);
@@ -114,6 +145,12 @@ public class LocationService extends Service implements AMapLocationListener {
         }
     }
 
+    public String getNotificationContent() {
+        int duration = (int) ((System.currentTimeMillis() - mStartTime) / 1000);
+        String durationStr = Utils.getTimeStr(duration);
+        return "时间： " + durationStr + "   距离： " + distance + "m";
+    }
+
     /**
      * 开始跑步
      */
@@ -124,6 +161,11 @@ public class LocationService extends Service implements AMapLocationListener {
         distance = 0f;
         //跑步标志位置为true
         mIsRunning = true;
+        //开始跑步  new一个新的跑步记录
+        if (mRecord != null) mRecord = null;
+        mRecord = new RunningRecord();
+        mStartTime = System.currentTimeMillis();
+        mRecord.setDate(getCurrentDate(mStartTime));
         mTimeHandler.sendEmptyMessage(0);
     }
 
@@ -132,7 +174,7 @@ public class LocationService extends Service implements AMapLocationListener {
         @Override
         public boolean handleMessage(Message msg) {
             if (mIsRunning){
-                long time = System.currentTimeMillis() - mStartTime;
+                time = System.currentTimeMillis() - mStartTime;
                 if (mCallback != null) try {
                     mCallback.timeUpdate(time);
                 } catch (RemoteException e) {
@@ -156,8 +198,51 @@ public class LocationService extends Service implements AMapLocationListener {
     private void stopRunning() {
         //跑步标志位置为false
         mIsRunning = false;
-        //将前台进程取消
-        stopForeground(true);
+        saveRecord(mRecord.getDate());
+
+    }
+
+    //保存到数据库
+    protected void saveRecord(String time) {
+        if (list.size() > 0) {
+            mDBAdapter = new DBAdapter(this);
+            mDBAdapter.open();
+            LatLng firstLocation = list.get(0);
+            LatLng lastLocation = list.get(list.size() - 1);
+
+            String startPoint = latLngToString(firstLocation);
+            String endPoint = latLngToString(lastLocation);
+            String pathLinePoints = getPathLineString(list);
+            String distanceStr = String.valueOf(distance);
+            int duration = (int) ((System.currentTimeMillis() - mStartTime) / 1000);
+            String durationStr = Utils.getTimeStr(duration);
+            String average_speed = String.valueOf(distance / (float) duration);
+            mDBAdapter.insertRecord(startPoint, endPoint, pathLinePoints, distanceStr,
+                    durationStr, average_speed, time);
+            mDBAdapter.close();
+
+        } else {
+            Log.e(LOG_TAG, "没有记录到数据库");
+        }
+
+    }
+
+    //将经纬度集合，转换为string
+    private String getPathLineString(List<LatLng> list) {
+        StringBuffer pathLine = new StringBuffer();
+
+        for (int i = 1; i < list.size() - 1; i++) {
+            pathLine.append(latLngToString(list.get(i))).append(";");
+        }
+        return pathLine.toString();
+    }
+
+    //将经纬度对象，转换为string
+    private String latLngToString(LatLng latLng) {
+        StringBuffer sb = new StringBuffer();
+        sb.append(latLng.latitude).append(",");
+        sb.append(latLng.longitude).append(",");
+        return sb.toString();
     }
 
     private IRunning.Stub stub = new IRunning.Stub() {
@@ -185,5 +270,100 @@ public class LocationService extends Service implements AMapLocationListener {
         public boolean isRunning() throws RemoteException {
             return mIsRunning;
         }
+
+        @Override
+        public void openNotification() throws RemoteException {
+
+            builder = new NotificationCompat.Builder(mContext);
+            Intent notificationIntent = new Intent(mContext, MainActivity.class);
+            PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, notificationIntent, 0);
+            builder.setSmallIcon(R.drawable.icon);
+            Bitmap largeIcon = BitmapFactory.decodeResource(getResources(), R.drawable.icon);
+            builder.setLargeIcon(largeIcon);
+            builder.setContentTitle("正在跑步...");
+            builder.setContentText(getNotificationContent());
+            builder.setContentIntent(pendingIntent);
+            notification = builder.build();
+
+            startForeground(1, notification);
+            mIsShowNotification = true;
+
+//            NotificationCompat.Builder builder = new NotificationCompat.Builder(mContext);
+//            builder.setSmallIcon(R.drawable.location_marker);
+//            builder.setContentTitle("正在跑步...");
+//            builder.setContentText("时间：  距离：  ");
+//
+//            //打开MainActivity
+//            Intent notificationIntent = new Intent(mContext, MainActivity.class);
+//            PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0,
+//                    notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+//
+//            //打开HistoryActivity
+//            Intent hisIntent = new Intent(mContext, HistoryActivity.class);
+//            PendingIntent openHistory = PendingIntent.getActivity(mContext, 0,
+//                    hisIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+//
+//            //自定义的Notification视图
+//            RemoteViews remoteViews = new RemoteViews(getPackageName(), R.layout.service_notification);
+//            remoteViews.setTextViewText(R.id.service_notification_msg, "正在跑步");
+//            remoteViews.setImageViewResource(R.id.service_notification_icon, R.drawable.running);
+//            remoteViews.setOnClickPendingIntent(R.id.open_history_activity, openHistory);
+//
+//            Log.e(LOG_TAG, "remoteViews---->" + remoteViews.toString());
+//
+//            builder.setContent(remoteViews);
+//            builder.setContentIntent(pendingIntent);
+//            Notification notification = builder.build();
+//            startForeground(1, notification);
+        }
+
+        @Override
+        public void closeNotification() throws RemoteException {
+            stopForeground(true);
+            mIsShowNotification = false;
+        }
+
+        @Override
+        public void chooseLocationMode(int locationMode) throws RemoteException {
+            setLocationMode(locationMode);
+        }
     };
+
+    private void setLocationMode(int locationMode) {
+        switch (locationMode) {
+            case 1:
+                mOption = new AMapLocationClientOption();
+                mOption.setInterval(3000);
+                mOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);
+                mLocationClient.setLocationOption(mOption);
+                mLocationClient.startLocation();
+                break;
+            case 2:
+                mOption = new AMapLocationClientOption();
+                mOption.setInterval(3000);
+                mOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Battery_Saving);
+                mLocationClient.setLocationOption(mOption);
+                mLocationClient.startLocation();
+                break;
+            case 3:
+                mOption = new AMapLocationClientOption();
+                mOption.setInterval(3000);
+                mOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Device_Sensors);
+                mLocationClient.setLocationOption(mOption);
+                mLocationClient.startLocation();
+                Log.v(LOG_TAG, "定位模式改变啦啦啦啊？？？？？？");
+                break;
+        }
+        SharedPreferences.Editor editor = getSharedPreferences("modeData", MODE_PRIVATE).edit();
+        editor.putInt("locationMode", locationMode);
+        editor.commit();
+    }
+
+    //格式化当前日期
+    private String getCurrentDate(long time) {
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss ");
+        Date curDate = new Date(time);
+        String date = format.format(curDate);
+        return date;
+    }
 }

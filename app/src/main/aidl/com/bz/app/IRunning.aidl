@@ -8,6 +8,9 @@ interface IRunning {
     void start();
     void stop();
     boolean isRunning();
+    void openNotification();
+    void closeNotification();
+    void chooseLocationMode(int locationMode);
 
     void registCallback(IRunningCallback callback);
     void unregistCallback(IRunningCallback callback);

@@ -16,6 +16,7 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
@@ -53,16 +54,12 @@ public class MainActivity extends AppCompatActivity
     private TextureMapView mMapView = null;  //地图view
     private AMap aMap;  //地图对象
     private PolylineOptions mPolyOptions;  //在地图上画出轨迹
-    private RunningRecord mRecord;  //一条跑步记录
     private Marker mLocationMarker = null;
     private TextView mTimeTV;  //时间
     private TextView mDistanceTV; //距离
     private ToggleButton mRunningRecordTBtn;  //记录跑步
     private IRunning mRunning;  //AIDL接口
-    private long mStartTime;
-    private int mDistance;  //多少米
-    private int mDuration;  //多少秒
-    private DBAdapter mDBAdapter;
+    private MarkerOptions markerOptions;
 
     private static final String LOG_TAG = "MainActivity";
 
@@ -72,6 +69,7 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        toolbar.setOnMenuItemClickListener(onMenuItemClick);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -96,8 +94,10 @@ public class MainActivity extends AppCompatActivity
             aMap.setMyLocationType(AMap.LOCATION_TYPE_LOCATE);
             //地图初始缩放级别
             aMap.moveCamera(CameraUpdateFactory.zoomTo(16));
-            mLocationMarker = aMap.addMarker(new MarkerOptions()
-                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.location_marker)));
+            markerOptions = new MarkerOptions()
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.location_marker));
+            mLocationMarker = aMap.addMarker(markerOptions);
+
         }
 
         //显示跑步计时
@@ -111,63 +111,15 @@ public class MainActivity extends AppCompatActivity
             public void onClick(View v) {
                 try {
                     if (mRunningRecordTBtn.isChecked()) {
-                        aMap.clear(true);
-                        if (mRecord != null) mRecord = null;
-                        mRecord = new RunningRecord();
-                        mStartTime = System.currentTimeMillis();
-                        mRecord.setDate(getCurrentDate(mStartTime));
                         mRunning.start();
-
                     } else {
                         mRunning.stop();
-                        saveRecord(mRecord.getPathLinePoints(), mRecord.getDate());
                     }
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }
             }
         });
-    }
-
-    //保存到数据库
-    protected void saveRecord(List<LatLng> list, String time) {
-        if (list.size() > 0) {
-            mDBAdapter = new DBAdapter(this);
-            mDBAdapter.open();
-            LatLng firstLocation = list.get(0);
-            LatLng lastLocation = list.get(list.size() - 1);
-
-            String startPoint = latLngToString(firstLocation);
-            String endPoint = latLngToString(lastLocation);
-            String pathLinePoints = getPathLineString(list);
-            String distance = String.valueOf(mDistance);
-            String duration = Utils.getTimeStr(mDuration);
-            String average_speed = String.valueOf(mDistance / (float) mDuration);
-            mDBAdapter.insertRecord(startPoint, endPoint, pathLinePoints, distance,
-                    duration, average_speed, time);
-            mDBAdapter.close();
-        } else {
-            Toast.makeText(MainActivity.this, "没有记录到数据库", Toast.LENGTH_SHORT).show();
-        }
-
-    }
-
-    //将经纬度集合，转换为string
-    private String getPathLineString(List<LatLng> list) {
-        StringBuffer pathLine = new StringBuffer();
-
-        for (int i = 1; i < list.size() - 1; i++) {
-            pathLine.append(latLngToString(list.get(i))).append(";");
-        }
-        return pathLine.toString();
-    }
-
-    //将经纬度对象，转换为string
-    private String latLngToString(LatLng latLng) {
-        StringBuffer sb = new StringBuffer();
-        sb.append(latLng.latitude).append(",");
-        sb.append(latLng.longitude).append(",");
-        return sb.toString();
     }
 
     //初始化地图轨迹线
@@ -177,11 +129,33 @@ public class MainActivity extends AppCompatActivity
         mPolyOptions.width(10f);
     }
 
-    //在地图上画线
-    private void drawLine() {
-        aMap.clear(true);
-        aMap.addPolyline(mPolyOptions);
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.setting_location_mode, menu);
+        return super.onCreateOptionsMenu(menu);
     }
+
+    private Toolbar.OnMenuItemClickListener onMenuItemClick = new Toolbar.OnMenuItemClickListener() {
+        @Override
+        public boolean onMenuItemClick(MenuItem item) {
+            try {
+                switch (item.getItemId()) {
+                    case R.id.high_accuracy:
+                        mRunning.chooseLocationMode(1);
+                        break;
+                    case R.id.battery_saving:
+                        mRunning.chooseLocationMode(2);
+                        break;
+                    case R.id.device_sensors:
+                        mRunning.chooseLocationMode(3);
+                        break;
+                }
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+            return false;
+        }
+    };
 
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
@@ -217,8 +191,9 @@ public class MainActivity extends AppCompatActivity
             mRunning = IRunning.Stub.asInterface(service);
             try {
                 mRunning.registCallback(callback);
-                if (mRunning.isRunning()){
+                if (mRunning.isRunning()) {
                     mRunningRecordTBtn.setChecked(true);
+                    mRunning.closeNotification();
                 }
             } catch (RemoteException e) {
                 e.printStackTrace();
@@ -229,40 +204,35 @@ public class MainActivity extends AppCompatActivity
         public void onServiceDisconnected(ComponentName name) {
         }
     };
-    int j = 0;
+
     private IRunningCallback callback = new IRunningCallback.Stub() {
         @Override
         public void notifyData(float distance, String latLngListStr, String nowLatLngStr) throws RemoteException {
             mDistanceHandler.sendEmptyMessage((int) distance);
-
-            Type type = new TypeToken<ArrayList<LatLng>>(){}.getType();
-            //location集合
             Gson gson = new Gson();
-            ArrayList<LatLng> locationList = gson.fromJson(latLngListStr, type);
-
-            if (locationList.size() > 0) {
-//                Log.e(LOG_TAG, "i-->" + (j++));
-//                mRecord.setPathLinePoints(locationList);
-
-                //地图上的轨迹
-                for (int i = 0; i < locationList.size(); i++) {
-                    mPolyOptions.add(locationList.get(i));
-                }
-                drawLine();
-            }
-
             //当前定位
             LatLng nowLatLng = gson.fromJson(nowLatLngStr, LatLng.class);
-            Log.v(LOG_TAG, "nowLatLng--->" + nowLatLng.latitude + "," + nowLatLng.longitude);
+            //添加Marker显示定位
             mLocationMarker.setPosition(nowLatLng);
             //每次定位移动到地图中心
             aMap.moveCamera(CameraUpdateFactory.changeLatLng(nowLatLng));
 
+            //跑步轨迹
+            Type type = new TypeToken<ArrayList<LatLng>>() {
+            }.getType();
+            //location集合
+            ArrayList<LatLng> locationList = gson.fromJson(latLngListStr, type);
+            if (locationList.size() > 0) {
+                for (int i = 0; i < locationList.size(); i++) {
+                    mPolyOptions.add(locationList.get(i));
+                }
+                aMap.addPolyline(mPolyOptions);
+            }
         }
 
         @Override
         public void timeUpdate(long time) throws RemoteException {
-            mTimeHandler.sendEmptyMessage((int)(time / 1000));
+            mTimeHandler.sendEmptyMessage((int) (time / 1000));
         }
     };
 
@@ -270,7 +240,6 @@ public class MainActivity extends AppCompatActivity
     private Handler mDistanceHandler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
-            mDistance = msg.what;
             mDistanceTV.setText(msg.what + "m");
             return false;
         }
@@ -280,19 +249,11 @@ public class MainActivity extends AppCompatActivity
     private Handler mTimeHandler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
-            mDuration = msg.what;
             mTimeTV.setText(Utils.getTimeStr(msg.what));
             return false;
         }
     });
 
-    //格式化当前日期
-    private String getCurrentDate(long time) {
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss ");
-        Date curDate = new Date(time);
-        String date = format.format(curDate);
-        return date;
-    }
 
     @Override
     protected void onDestroy() {
@@ -322,6 +283,10 @@ public class MainActivity extends AppCompatActivity
     protected void onStop() {
         super.onStop();
         try {
+            //正在跑步，开启通知
+            if (mRunning.isRunning()) {
+                mRunning.openNotification();
+            }
             mRunning.unregistCallback(callback);
         } catch (RemoteException e) {
             e.printStackTrace();

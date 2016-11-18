@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#0ac39e"
+    android:gravity="center"
+    android:padding="10dp" >
+
+    <ImageView
+        android:id="@+id/service_notification_icon"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="#000000"
+        android:scaleType="centerInside"/>
+
+    <LinearLayout
+        android:id="@+id/service_notification_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="right"
+        android:orientation="vertical"
+        >
+
+        <TextView
+            android:id="@+id/service_notification_msg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="textview"
+            />
+
+        <TextView
+            android:id="@+id/open_history_activity"
+            android:padding="2dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Open HistoryActivity"
+            android:textColor="#fff" />
+    </LinearLayout>
+
+
+</LinearLayout>
