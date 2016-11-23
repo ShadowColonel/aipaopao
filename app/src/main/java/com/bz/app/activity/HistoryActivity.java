@@ -4,7 +4,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.MenuItem;
 
 import com.bz.app.R;
 import com.bz.app.adapter.HistoryRecyclerAdapter;
@@ -27,6 +29,8 @@ public class HistoryActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_history);
 
+        initToolBar();
+
         mDBAdapter = new DBAdapter(this);
         mDBAdapter.open();
         list = mDBAdapter.queryAllRecord();
@@ -36,5 +40,21 @@ public class HistoryActivity extends AppCompatActivity {
         mAdapter = new HistoryRecyclerAdapter(list, this);
         mHistoryRecycler.setAdapter(mAdapter);
 
+    }
+
+    private void initToolBar() {
+        Toolbar toolbar = (Toolbar) findViewById(R.id.all_toolbar);
+        toolbar.setTitle("历史记录");
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

@@ -3,6 +3,9 @@
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
-
     <string name="action_settings">Settings</string>
+    <string name="pm">PM 2.5:%1$s</string>
+    <string name="airQuality">空气质量:%1$s</string>
+    <string name="temp">%1$s℃</string>
+    <string name="index">运动指数:%1$s</string>
 </resources>

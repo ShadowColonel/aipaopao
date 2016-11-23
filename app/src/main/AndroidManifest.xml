@@ -51,7 +51,8 @@
             android:exported="true"
             android:process=":running" />
 
-        <activity android:name=".activity.HistoryActivity"></activity>
+        <activity android:name=".activity.HistoryActivity" />
+        <activity android:name=".activity.StatisticsActivity"  />
     </application>
 
 </manifest>

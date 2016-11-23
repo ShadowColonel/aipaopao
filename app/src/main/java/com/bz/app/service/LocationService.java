@@ -137,6 +137,7 @@ public class LocationService extends Service implements AMapLocationListener {
                     String latLngListStr = gson.toJson(list);
                     //未跑步时的定位
                     String nowLatLngStr = gson.toJson(mLatLng);
+                    //城市
                     if (mCallback != null) mCallback.notifyData(distance, latLngListStr, nowLatLngStr);
                 } catch (RemoteException e) {
                     e.printStackTrace();
