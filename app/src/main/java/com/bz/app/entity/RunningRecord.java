@@ -1,9 +1,11 @@
 package com.bz.app.entity;
 
-import com.amap.api.location.AMapLocation;
+
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import com.amap.api.maps.model.LatLng;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,7 +14,7 @@ import java.util.List;
  * 一条跑步轨迹，包括了起点，终点，轨迹中间点，距离，跑步用，速度，开始时间
  */
 
-public class RunningRecord {
+public class RunningRecord implements Parcelable {
 
     private LatLng startPoint;
     private LatLng endPoint;
@@ -90,16 +92,44 @@ public class RunningRecord {
         this.date = date;
     }
 
-    public void addPoint(LatLng point) {
-        pathLinePoints.add(point);
+
+    @Override
+    public int describeContents() {
+        return 0;
     }
 
     @Override
-    public String toString() {
-        StringBuilder record = new StringBuilder();
-        record.append("recordsize:" + getPathLinePoints().size() + ",");
-        record.append("distance:" + getDistance() + "m,");
-        record.append("duration:" + getDuration());
-        return record.toString();
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeParcelable(this.startPoint, flags);
+        dest.writeParcelable(this.endPoint, flags);
+        dest.writeTypedList(this.pathLinePoints);
+        dest.writeString(this.distance);
+        dest.writeString(this.duration);
+        dest.writeString(this.averageSpeed);
+        dest.writeString(this.date);
+        dest.writeInt(this.id);
     }
+
+    protected RunningRecord(Parcel in) {
+        this.startPoint = in.readParcelable(LatLng.class.getClassLoader());
+        this.endPoint = in.readParcelable(LatLng.class.getClassLoader());
+        this.pathLinePoints = in.createTypedArrayList(LatLng.CREATOR);
+        this.distance = in.readString();
+        this.duration = in.readString();
+        this.averageSpeed = in.readString();
+        this.date = in.readString();
+        this.id = in.readInt();
+    }
+
+    public static final Parcelable.Creator<RunningRecord> CREATOR = new Parcelable.Creator<RunningRecord>() {
+        @Override
+        public RunningRecord createFromParcel(Parcel source) {
+            return new RunningRecord(source);
+        }
+
+        @Override
+        public RunningRecord[] newArray(int size) {
+            return new RunningRecord[size];
+        }
+    };
 }

@@ -10,7 +10,6 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.PorterDuff;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -34,9 +33,8 @@ import com.bz.app.IRunningCallback;
 import com.bz.app.utils.Utils;
 import com.google.gson.Gson;
 
-import java.text.SimpleDateFormat;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class LocationService extends Service implements AMapLocationListener {
@@ -57,8 +55,7 @@ public class LocationService extends Service implements AMapLocationListener {
     private NotificationManager notificationManager; //管理通知
     private NotificationCompat.Builder builder;  //创建通知
     private boolean mIsShowNotification = false;  //是否显示通知
-
-
+    private DecimalFormat df = new DecimalFormat("0.0");
 
     private static final String LOG_TAG = "LocationService";
 
@@ -165,8 +162,10 @@ public class LocationService extends Service implements AMapLocationListener {
         //开始跑步  new一个新的跑步记录
         if (mRecord != null) mRecord = null;
         mRecord = new RunningRecord();
+        //毫秒 ms
         mStartTime = System.currentTimeMillis();
-        mRecord.setDate(getCurrentDate(mStartTime));
+
+        mRecord.setDate(String.valueOf(mStartTime));
         mTimeHandler.sendEmptyMessage(0);
     }
 
@@ -214,10 +213,18 @@ public class LocationService extends Service implements AMapLocationListener {
             String startPoint = latLngToString(firstLocation);
             String endPoint = latLngToString(lastLocation);
             String pathLinePoints = getPathLineString(list);
-            String distanceStr = String.valueOf(distance);
+
+            //公里
+            String distanceStr = df.format(distance / 1000.0);
+
+            //秒
             int duration = (int) ((System.currentTimeMillis() - mStartTime) / 1000);
+
             String durationStr = Utils.getTimeStr(duration);
-            String average_speed = String.valueOf(distance / (float) duration);
+
+            //速度:km/min
+            String average_speed = df.format((distance / 1000.0) / duration * 60);
+
             mDBAdapter.insertRecord(startPoint, endPoint, pathLinePoints, distanceStr,
                     durationStr, average_speed, time);
             mDBAdapter.close();
@@ -352,19 +359,10 @@ public class LocationService extends Service implements AMapLocationListener {
                 mOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Device_Sensors);
                 mLocationClient.setLocationOption(mOption);
                 mLocationClient.startLocation();
-                Log.v(LOG_TAG, "定位模式改变啦啦啦啊？？？？？？");
                 break;
         }
         SharedPreferences.Editor editor = getSharedPreferences("modeData", MODE_PRIVATE).edit();
         editor.putInt("locationMode", locationMode);
         editor.commit();
-    }
-
-    //格式化当前日期
-    private String getCurrentDate(long time) {
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss ");
-        Date curDate = new Date(time);
-        String date = format.format(curDate);
-        return date;
     }
 }

@@ -69,7 +69,7 @@ public class LinearChartView extends View{
         int yEnd = getHeight() - 100;
 
 //        paint.setColor(Color.parseColor("#86837E"));
-        paint.setColor(Color.RED);
+        paint.setColor(Color.BLACK);
         canvas.drawLine(100, 150, 100, yEnd, paint);  //纵坐标
         canvas.drawLine(100, 150, 110, 167, paint);
         canvas.drawLine(100, 150, 90, 167, paint);
@@ -92,14 +92,32 @@ public class LinearChartView extends View{
             int numWidth = (int) paint.measureText(String.valueOf(num));
             canvas.drawText(num + "", (100 + xPart * i) - numWidth / 2 , yEnd + 5 + paint.getTextSize(), paint);
         }
-
         for (int j = 1; j < 6; j++) {
             int num = j * 1;
             int numWidth = (int) paint.measureText(String.valueOf(num));
             canvas.drawText(num + "", 100 - 5 - numWidth, yEnd - j * yPart + paint.getTextSize() / 2, paint);
-
         }
-//        getResources().getDisplayMetrics().density
 
+
+
+        float startX = 100;
+        float startY = yEnd;
+        float endX;
+        float endY = yEnd;
+
+        for (int k = 1; k < 6; k++) {
+            float random = (float) (Math.random() * 2);
+
+            paint.setStrokeWidth(2f);
+            endX = 100 + k * xPart;
+            endY = endY - yPart * random;
+            paint.setColor(Color.RED);
+            canvas.drawLine(startX, startY, endX, endY, paint);
+            paint.setColor(Color.BLUE);
+            paint.setStrokeWidth(3f);
+            canvas.drawPoint(endX, endY, paint);
+            startX = endX;
+            startY = endY;
+        }
     }
 }

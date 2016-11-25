@@ -11,7 +11,7 @@ import android.widget.TableLayout;
 import com.bz.app.R;
 import com.bz.app.adapter.ViewPagerAdapter;
 
-public class StatisticsActivity extends AppCompatActivity {
+public class StatisticsActivity extends BaseActivity {
 
     private TabLayout mTabLayout;
     private ViewPager mViewPager;
@@ -20,9 +20,7 @@ public class StatisticsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_statistics);
-
-        initToolBar();
+        setContentView(R.layout.activity_statistics, "数据统计");
 
         mTabLayout = (TabLayout) findViewById(R.id.statistics_tab_layout);
         mViewPager = (ViewPager) findViewById(R.id.statistics_view_pager);
@@ -32,19 +30,4 @@ public class StatisticsActivity extends AppCompatActivity {
 
     }
 
-    private void initToolBar() {
-        Toolbar toolbar = (Toolbar) findViewById(R.id.all_toolbar);
-        toolbar.setTitle("数据统计");
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            finish();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
 }

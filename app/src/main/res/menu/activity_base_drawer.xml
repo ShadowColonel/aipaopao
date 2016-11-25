@@ -9,6 +9,10 @@
             android:icon="@drawable/running"
             android:title="开始跑步" />
         <item
+            android:id="@+id/nav_cloud"
+            android:icon="@drawable/cloud"
+            android:title="天气状况" />
+        <item
             android:id="@+id/nav_data"
             android:icon="@drawable/statistics"
             android:title="数据统计" />
