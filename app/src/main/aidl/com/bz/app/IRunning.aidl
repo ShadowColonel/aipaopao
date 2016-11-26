@@ -7,6 +7,8 @@ interface IRunning {
 
     void start();
     void stop();
+    void pause();
+    void resume();
     boolean isRunning();
     void openNotification();
     void closeNotification();

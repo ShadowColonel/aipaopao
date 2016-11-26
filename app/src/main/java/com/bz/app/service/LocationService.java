@@ -46,7 +46,6 @@ public class LocationService extends Service implements AMapLocationListener {
     private float distance; //跑步距离
     private LatLng startLatLng = null;
     private long mStartTime = -1;  //开始跑步时间
-    private long time;
     private IRunningCallback mCallback;
     private boolean mIsRunning = false;  //跑步标志位
     private RunningRecord mRecord;  //一条跑步记录
@@ -106,6 +105,12 @@ public class LocationService extends Service implements AMapLocationListener {
     }
 
     @Override
+    public void unbindService(ServiceConnection conn) {
+        super.unbindService(conn);
+        if (!mIsRunning) stopSelf();
+    }
+
+    @Override
     public void onLocationChanged(AMapLocation aMapLocation) {
         if (aMapLocation != null) {
             if (aMapLocation.getErrorCode() == 0) {
@@ -147,59 +152,6 @@ public class LocationService extends Service implements AMapLocationListener {
         int duration = (int) ((System.currentTimeMillis() - mStartTime) / 1000);
         String durationStr = Utils.getTimeStr(duration);
         return "时间： " + durationStr + "   距离： " + distance + "m";
-    }
-
-    /**
-     * 开始跑步
-     */
-    private void startRunning() {
-        //开始跑步时间
-        mStartTime = System.currentTimeMillis();
-        list.clear();
-        distance = 0f;
-        //跑步标志位置为true
-        mIsRunning = true;
-        //开始跑步  new一个新的跑步记录
-        if (mRecord != null) mRecord = null;
-        mRecord = new RunningRecord();
-        //毫秒 ms
-        mStartTime = System.currentTimeMillis();
-
-        mRecord.setDate(String.valueOf(mStartTime));
-        mTimeHandler.sendEmptyMessage(0);
-    }
-
-
-    private Handler mTimeHandler = new Handler(new Handler.Callback() {
-        @Override
-        public boolean handleMessage(Message msg) {
-            if (mIsRunning){
-                time = System.currentTimeMillis() - mStartTime;
-                if (mCallback != null) try {
-                    mCallback.timeUpdate(time);
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
-                mTimeHandler.sendEmptyMessageDelayed(0,1000);
-            }
-            return false;
-        }
-    });
-
-    @Override
-    public void unbindService(ServiceConnection conn) {
-        super.unbindService(conn);
-        if (!mIsRunning) stopSelf();
-    }
-
-    /**
-     * 结束跑步
-     */
-    private void stopRunning() {
-        //跑步标志位置为false
-        mIsRunning = false;
-        saveRecord(mRecord.getDate());
-
     }
 
     //保存到数据库
@@ -253,6 +205,73 @@ public class LocationService extends Service implements AMapLocationListener {
         return sb.toString();
     }
 
+    long time = 0;
+    private Handler mTimeHandler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
+            if (mIsRunning){
+                time = time++ * 1000 + sumTime;
+                if (mCallback != null) try {
+                    mCallback.timeUpdate(time);
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
+                mTimeHandler.sendEmptyMessageDelayed(0,1000);
+            }
+            return false;
+        }
+    });
+
+    /**
+     * 开始跑步
+     */
+    private void startRunning() {
+        //开始跑步时间
+        mStartTime = System.currentTimeMillis();
+        list.clear();
+        sumTime = 0;
+        distance = 0f;
+        //跑步标志位置为true
+        mIsRunning = true;
+        //开始跑步  new一个新的跑步记录
+        if (mRecord != null) mRecord = null;
+        mRecord = new RunningRecord();
+        //毫秒 ms
+        mStartTime = System.currentTimeMillis();
+        mRecord.setDate(String.valueOf(mStartTime));
+        mTimeHandler.sendEmptyMessage(0);
+    }
+
+    /**
+     * 结束跑步
+     */
+    private void stopRunning() {
+        //跑步标志位置为false
+        mIsRunning = false;
+        saveRecord(mRecord.getDate());
+
+    }
+
+    private long pauseTime;
+    private long resumeTime;
+    private long sumTime;
+    /**
+     * 暂停跑步
+     */
+    private void onPauseRunning() {
+        pauseTime = System.currentTimeMillis();
+        mIsRunning = false;
+    }
+
+    /**
+     * 继续跑步
+     */
+    private void onResumeRunning() {
+        resumeTime = System.currentTimeMillis();
+        sumTime = resumeTime - pauseTime + sumTime;
+        mIsRunning = true;
+    }
+
     private IRunning.Stub stub = new IRunning.Stub() {
         @Override
         public void start() throws RemoteException {
@@ -262,6 +281,16 @@ public class LocationService extends Service implements AMapLocationListener {
         @Override
         public void stop() throws RemoteException {
             stopRunning();
+        }
+
+        @Override
+        public void pause() throws RemoteException {
+            onPauseRunning();
+        }
+
+        @Override
+        public void resume() throws RemoteException {
+            onResumeRunning();
         }
 
         @Override
@@ -336,6 +365,8 @@ public class LocationService extends Service implements AMapLocationListener {
             setLocationMode(locationMode);
         }
     };
+
+
 
     private void setLocationMode(int locationMode) {
         switch (locationMode) {

@@ -41,6 +41,8 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 
+import static com.bz.app.R.id.main_sec_linear;
+
 public class MainActivity extends BaseActivity implements View.OnClickListener {
 
     private TextureMapView mMapView = null;  //地图view
@@ -49,18 +51,25 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     private Marker mLocationMarker = null;
     private TextView mTimeTV;  //时间
     private TextView mDistanceTV; //距离
-    private ToggleButton mRunningRecordTBtn;  //记录跑步
     private IRunning mRunning;  //AIDL接口
     private MarkerOptions markerOptions;
     private AnimImageView mAnimImg;
-    private LinearLayout mLinear;
-    private LinearLayout mLinear1;
-    private LinearLayout mLinear2;
-    private TextView mText1;
-    private TextView mText2;
+    private LinearLayout mSecLinear;
+    private LinearLayout mSecLinear1;
+    private LinearLayout mSecLinear2;
+    private LinearLayout mRunLinear;
+    private LinearLayout mRunLinear1;
+    private LinearLayout mRunLinear2;
+    private LinearLayout mPauseLinear;
+    private LinearLayout mPauseLinear1;
+    private LinearLayout mPauseLinear2;
+    private LinearLayout mUnlockLinear;
+    private TextView mSkipTx;
     private SeekBar mSeekBar;
 
     private static final String LOG_TAG = "MainActivity";
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -76,6 +85,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         initPolyline();
 
     }
+
 
     private void init() {
 
@@ -94,53 +104,109 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         //显示跑步距离
         mDistanceTV = (TextView) findViewById(R.id.activity_main_distance_tv);
 
-        mLinear = (LinearLayout) findViewById(R.id.main_activity_bottom_linear);
-        mLinear1 = (LinearLayout) findViewById(R.id.main_activity_bottom_linear1);
-        mLinear2 = (LinearLayout) findViewById(R.id.main_activity_bottom_linear2);
-        mText1 = (TextView) findViewById(R.id.main_activity_bottom_tx1);
-        mText2 = (TextView) findViewById(R.id.main_activity_bottom_tx2);
-        mSeekBar = (SeekBar) findViewById(R.id.seek_bar);
+
+        mSeekBar = (SeekBar) findViewById(R.id.main_seek_bar);
         mSeekBar.setPadding(0, 0, 0, 0);
+        mSeekBar.setMax(100);
+
+        mSecLinear = (LinearLayout) findViewById(R.id.main_sec_linear);
+        mSecLinear1 = (LinearLayout) findViewById(R.id.main_sec_linear1);
+        mSecLinear2 = (LinearLayout) findViewById(R.id.main_sec_linear2);
+        mSkipTx = (TextView) findViewById(R.id.main_sec_tx1);
+
+        mRunLinear = (LinearLayout) findViewById(R.id.main_run_linear);
+        mRunLinear1 = (LinearLayout) findViewById(R.id.main_run_linear1);
+        mRunLinear2 = (LinearLayout) findViewById(R.id.main_run_linear2);
+
+        mPauseLinear = (LinearLayout) findViewById(R.id.main_pause_linear);
+        mPauseLinear1 = (LinearLayout) findViewById(R.id.main_pause_linear1);
+        mPauseLinear2 = (LinearLayout) findViewById(R.id.main_pause_linear2);
+
+        mUnlockLinear = (LinearLayout) findViewById(R.id.main_unlock_linear);
 
         mAnimImg = (AnimImageView)findViewById(R.id.main_running_start);
         mAnimImg.setOnClickListener(this);
-        mLinear1.setOnClickListener(this);
-        mLinear2.setOnClickListener(this);
+        mSecLinear1.setOnClickListener(this);
+        mSecLinear2.setOnClickListener(this);
+        mRunLinear1.setOnClickListener(this);
+        mRunLinear2.setOnClickListener(this);
+        mPauseLinear1.setOnClickListener(this);
+        mPauseLinear2.setOnClickListener(this);
+        mUnlockLinear.setOnClickListener(this);
 
-        //记录跑步按钮
-        mRunningRecordTBtn = (ToggleButton) findViewById(R.id.main_running_record);
-        mRunningRecordTBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+    }
+    private int num = 100;
+    private Handler countDownHandler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
+            if (num > 0) {
+                if (num % 10 == 0) {
+                    mSkipTx.setText(num / 10 + " Skip");
+                }
+                mSeekBar.setProgress(100 - num);
+                num--;
+                countDownHandler.sendEmptyMessageDelayed(0, 100);
+            } if (num == 0) {
                 try {
-                    if (mRunningRecordTBtn.isChecked()) {
-                        mRunning.start();
-                    } else {
-                        mRunning.stop();
-                    }
+                    mRunning.start();
+                    mSecLinear.setVisibility(View.GONE);
+                    mRunLinear.setVisibility(View.VISIBLE);
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }
             }
-        });
-    }
+            return false;
+        }
+    });
 
     @Override
     public void onClick(View v) {
         try {
             switch (v.getId()) {
                 case R.id.main_running_start:
-                    mRunning.start();
                     mAnimImg.setVisibility(View.GONE);
-                    mLinear.setVisibility(View.VISIBLE);
+                    mSecLinear.setVisibility(View.VISIBLE);
+                    countDownHandler.sendEmptyMessage(0);
                     break;
-                case R.id.main_activity_bottom_linear1:
+                //马上开始
+                case R.id.main_sec_linear1:
+                    mRunning.start();
+                    mSecLinear.setVisibility(View.GONE);
+                    mRunLinear.setVisibility(View.VISIBLE);
+                    break;
+                //加10s
+                case R.id.main_sec_linear2:
+                    num += 100;
+                    break;
+                //锁屏
+                case R.id.main_run_linear1:
+                    mRunLinear.setVisibility(View.GONE);
+                    mUnlockLinear.setVisibility(View.VISIBLE);
+                    break;
+                //暂停跑步
+                case R.id.main_run_linear2:
+                    mRunning.pause();
+                    mRunLinear.setVisibility(View.GONE);
+                    mPauseLinear.setVisibility(View.VISIBLE);
+                    break;
+                //停止跑步
+                case R.id.main_pause_linear1:
+                    mRunning.stop();
+                    mPauseLinear.setVisibility(View.GONE);
+                    mAnimImg.setVisibility(View.VISIBLE);
+                    break;
+                //继续跑步
+                case R.id.main_pause_linear2:
+                    mRunning.resume();
+                    mRunLinear.setVisibility(View.VISIBLE);
+                    mPauseLinear.setVisibility(View.GONE);
+                    break;
 
-                    break;
-                case R.id.main_activity_bottom_linear2:
-                    mText1.setText("Finish");
-                    mText2.setText("Resume");
-                    break;
+                //解锁
+                case R.id.main_unlock_linear:
+                    mUnlockLinear.setVisibility(View.GONE);
+                    mRunLinear.setVisibility(View.VISIBLE);
+
 
             }
         } catch (RemoteException e) {
@@ -193,7 +259,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
             try {
                 mRunning.registCallback(callback);
                 if (mRunning.isRunning()) {
-                    mRunningRecordTBtn.setChecked(true);
                     mRunning.closeNotification();
                 }
             } catch (RemoteException e) {
@@ -284,8 +349,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
         mMapView.onSaveInstanceState(outState);
+        super.onSaveInstanceState(outState);
     }
 
     @Override

@@ -72,36 +72,37 @@
                 android:padding="8dp"/>
 
             <LinearLayout
-                android:id="@+id/main_activity_bottom_linear"
+                android:id="@+id/main_sec_linear"
                 android:layout_width="match_parent"
-                android:layout_height="100dp"
+                android:layout_height="80dp"
                 android:layout_alignParentBottom="true"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:visibility="gone">
 
                 <SeekBar
-                    android:id="@+id/seek_bar"
+                    android:id="@+id/main_seek_bar"
                     android:layout_width="match_parent"
-                    android:layout_height="5dp"
-                    android:progress="30" />
+                    android:layout_height="5dp" />
 
                 <LinearLayout
                     android:background="#e3e3e3"
+                    android:orientation="horizontal"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent">
 
                     <LinearLayout
-                        android:id="@+id/main_activity_bottom_linear1"
+                        android:id="@+id/main_sec_linear1"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:gravity="center" >
 
                         <TextView
-                            android:id="@+id/main_activity_bottom_tx1"
+                            android:id="@+id/main_sec_tx1"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:drawableLeft="@mipmap/ic_launcher"
-                            android:text="Lock"
+                            android:text="10 Skip"
                             android:textSize="18sp"
                             android:clickable="false"
                             android:focusable="false"
@@ -115,18 +116,18 @@
                         android:background="#000"/>
 
                     <LinearLayout
-                        android:id="@+id/main_activity_bottom_linear2"
+                        android:id="@+id/main_sec_linear2"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:gravity="center" >
 
                         <TextView
-                            android:id="@+id/main_activity_bottom_tx2"
+                            android:id="@+id/main_sec_tx2"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:drawableLeft="@mipmap/ic_launcher"
-                            android:text="Pause"
+                            android:text="+10 Sec"
                             android:textSize="18sp"
                             android:clickable="false"
                             android:focusable="false"
@@ -134,10 +135,164 @@
                             android:gravity="center_vertical" />
                     </LinearLayout>
                 </LinearLayout>
-
-
-
             </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/main_run_linear"
+                android:background="#e3e3e3"
+                android:layout_width="match_parent"
+                android:layout_height="80dp"
+                android:orientation="horizontal"
+                android:layout_alignParentBottom="true"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:id="@+id/main_run_linear1"
+                    android:layout_weight="1"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center" >
+
+                    <TextView
+                        android:id="@+id/main_run_tx1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:drawableLeft="@mipmap/ic_launcher"
+                        android:text="Lock"
+                        android:textSize="18sp"
+                        android:clickable="false"
+                        android:focusable="false"
+                        android:focusableInTouchMode="false"
+                        android:gravity="center_vertical" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="match_parent"
+                    android:background="#000"/>
+
+                <LinearLayout
+                    android:id="@+id/main_run_linear2"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center" >
+
+                    <TextView
+                        android:id="@+id/main_run_tx2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:drawableLeft="@mipmap/ic_launcher"
+                        android:text="Pause"
+                        android:textSize="18sp"
+                        android:clickable="false"
+                        android:focusable="false"
+                        android:focusableInTouchMode="false"
+                        android:gravity="center_vertical" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/main_unlock_linear"
+                android:background="#e3e3e3"
+                android:layout_width="match_parent"
+                android:layout_height="80dp"
+                android:orientation="horizontal"
+                android:layout_alignParentBottom="true"
+                android:gravity="center"
+                android:visibility="gone" >
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text=">>>>>>"
+                    android:textSize="22sp"
+                    android:clickable="false"
+                    android:focusable="false"
+                    android:focusableInTouchMode="false"
+                    android:layout_marginLeft="50dp" />
+
+                <TextView
+                    android:id="@+id/main_unlock_tx1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:drawableLeft="@mipmap/ic_launcher"
+                    android:text="Unlock"
+                    android:textSize="18sp"
+                    android:clickable="false"
+                    android:focusable="false"
+                    android:focusableInTouchMode="false"
+                    android:gravity="center" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text=">>>>>>"
+                    android:textSize="22sp"
+                    android:clickable="false"
+                    android:focusable="false"
+                    android:focusableInTouchMode="false"
+                    android:gravity="end"
+                    android:layout_marginRight="50dp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/main_pause_linear"
+                android:background="#e3e3e3"
+                android:layout_width="match_parent"
+                android:layout_height="80dp"
+                android:orientation="horizontal"
+                android:layout_alignParentBottom="true"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:id="@+id/main_pause_linear1"
+                    android:layout_weight="1"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center" >
+
+                    <TextView
+                        android:id="@+id/main_pause_tx1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:drawableLeft="@mipmap/ic_launcher"
+                        android:text="Finish"
+                        android:textSize="18sp"
+                        android:clickable="false"
+                        android:focusable="false"
+                        android:focusableInTouchMode="false"
+                        android:gravity="center_vertical" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="match_parent"
+                    android:background="#000"/>
+
+                <LinearLayout
+                    android:id="@+id/main_pause_linear2"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center" >
+
+                    <TextView
+                        android:id="@+id/main_pause_tx2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:drawableLeft="@mipmap/ic_launcher"
+                        android:text="Resume"
+                        android:textSize="18sp"
+                        android:clickable="false"
+                        android:focusable="false"
+                        android:focusableInTouchMode="false"
+                        android:gravity="center_vertical" />
+                </LinearLayout>
+            </LinearLayout>
+
         </RelativeLayout>
 
     </LinearLayout>
