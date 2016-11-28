@@ -149,8 +149,7 @@ public class LocationService extends Service implements AMapLocationListener {
     }
 
     public String getNotificationContent() {
-        int duration = (int) ((System.currentTimeMillis() - mStartTime) / 1000);
-        String durationStr = Utils.getTimeStr(duration);
+        String durationStr = Utils.getTimeStr((int) (mDisplayTime / 1000));
         return "时间： " + durationStr + "   距离： " + distance + "m";
     }
 
@@ -169,13 +168,10 @@ public class LocationService extends Service implements AMapLocationListener {
             //公里
             String distanceStr = df.format(distance / 1000.0);
 
-            //秒
-            int duration = (int) ((System.currentTimeMillis() - mStartTime) / 1000);
-
-            String durationStr = Utils.getTimeStr(duration);
+            String durationStr = Utils.getTimeStr((int) (mDisplayTime / 1000));
 
             //速度:km/min
-            String average_speed = df.format((distance / 1000.0) / duration * 60);
+            String average_speed = df.format((distance / 1000.0) / (mDisplayTime / 6000));
 
             mDBAdapter.insertRecord(startPoint, endPoint, pathLinePoints, distanceStr,
                     durationStr, average_speed, time);
@@ -205,17 +201,21 @@ public class LocationService extends Service implements AMapLocationListener {
         return sb.toString();
     }
 
-    long time = 0;
+    private long mDisplayTime;
     private Handler mTimeHandler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
             if (mIsRunning){
-                time = time++ * 1000 + sumTime;
                 if (mCallback != null) try {
-                    mCallback.timeUpdate(time);
+                    mDisplayTime = System.currentTimeMillis() - mStartTime - mDelayTime;
+                    Log.v(LOG_TAG, "mDelayTime--->" + mDelayTime);
+                    Log.v(LOG_TAG, "mDisplayTime--->" + mDisplayTime);
+
+                    mCallback.timeUpdate(mDisplayTime);
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }
+
                 mTimeHandler.sendEmptyMessageDelayed(0,1000);
             }
             return false;
@@ -229,12 +229,11 @@ public class LocationService extends Service implements AMapLocationListener {
 
         mStartTime = System.currentTimeMillis(); //开始跑步时间
         list.clear();
-        sumTime = 0;
         distance = 0f;
+        mDelayTime = 0;
         mIsRunning = true; //跑步标志位置为true
         if (mRecord != null) mRecord = null; //开始跑步  new一个新的跑步记录
         mRecord = new RunningRecord();
-        mStartTime = System.currentTimeMillis(); //毫秒 ms
         mRecord.setDate(String.valueOf(mStartTime));
         mTimeHandler.sendEmptyMessage(0);
     }
@@ -243,30 +242,29 @@ public class LocationService extends Service implements AMapLocationListener {
      * 结束跑步
      */
     private void stopRunning() {
-        mIsRunning = false; //跑步标志位置为false
         saveRecord(mRecord.getDate());
-
     }
 
-    private long pauseTime;
-    private long resumeTime;
-    private long sumTime;
+    private long mPauseTime;  //暫停跑步的時間戳
     /**
      * 暂停跑步
      */
     private void onPauseRunning() {
         mIsRunning = false;
-        pauseTime = System.currentTimeMillis();
+        mPauseTime = System.currentTimeMillis();
     }
 
+    private long mResumeTime;  //繼續跑步的時間戳
+
+    private long mDelayTime;  //延遲時間
     /**
      * 继续跑步
      */
     private void onResumeRunning() {
         mIsRunning = true;
-        resumeTime = System.currentTimeMillis();
-        sumTime = resumeTime - pauseTime + sumTime;
-
+        mTimeHandler.sendEmptyMessage(0);
+        mResumeTime = System.currentTimeMillis();
+        mDelayTime += mResumeTime - mPauseTime;
     }
 
     private IRunning.Stub stub = new IRunning.Stub() {
@@ -362,8 +360,6 @@ public class LocationService extends Service implements AMapLocationListener {
             setLocationMode(locationMode);
         }
     };
-
-
 
     private void setLocationMode(int locationMode) {
         switch (locationMode) {

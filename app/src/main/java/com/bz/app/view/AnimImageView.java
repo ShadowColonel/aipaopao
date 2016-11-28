@@ -75,12 +75,12 @@ public class AnimImageView extends ImageView {
     @Override
     protected void onDraw(Canvas canvas) {
 
-        mPaint.setColor(Color.GREEN);
+        mPaint.setColor(Color.parseColor("#7FFFD4"));
         canvas.drawCircle(getWidth()/2, getHeight()/2, mLargeCircleRadius, mPaint);
 
         float density = getResources().getDisplayMetrics().density;
-        mSmallCircleRadius = mLargeCircleRadius-(int)(density*4);
-        mPaint.setColor(Color.RED);
+        mSmallCircleRadius = mLargeCircleRadius-(int)(density * 7);
+        mPaint.setColor(Color.parseColor("#54FF9F"));
 
         canvas.drawCircle(getWidth()/2, getHeight()/2, mSmallCircleRadius, mPaint);
         super.onDraw(canvas);
