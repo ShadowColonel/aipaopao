@@ -226,18 +226,15 @@ public class LocationService extends Service implements AMapLocationListener {
      * 开始跑步
      */
     private void startRunning() {
-        //开始跑步时间
-        mStartTime = System.currentTimeMillis();
+
+        mStartTime = System.currentTimeMillis(); //开始跑步时间
         list.clear();
         sumTime = 0;
         distance = 0f;
-        //跑步标志位置为true
-        mIsRunning = true;
-        //开始跑步  new一个新的跑步记录
-        if (mRecord != null) mRecord = null;
+        mIsRunning = true; //跑步标志位置为true
+        if (mRecord != null) mRecord = null; //开始跑步  new一个新的跑步记录
         mRecord = new RunningRecord();
-        //毫秒 ms
-        mStartTime = System.currentTimeMillis();
+        mStartTime = System.currentTimeMillis(); //毫秒 ms
         mRecord.setDate(String.valueOf(mStartTime));
         mTimeHandler.sendEmptyMessage(0);
     }
@@ -246,8 +243,7 @@ public class LocationService extends Service implements AMapLocationListener {
      * 结束跑步
      */
     private void stopRunning() {
-        //跑步标志位置为false
-        mIsRunning = false;
+        mIsRunning = false; //跑步标志位置为false
         saveRecord(mRecord.getDate());
 
     }
@@ -259,17 +255,18 @@ public class LocationService extends Service implements AMapLocationListener {
      * 暂停跑步
      */
     private void onPauseRunning() {
-        pauseTime = System.currentTimeMillis();
         mIsRunning = false;
+        pauseTime = System.currentTimeMillis();
     }
 
     /**
      * 继续跑步
      */
     private void onResumeRunning() {
+        mIsRunning = true;
         resumeTime = System.currentTimeMillis();
         sumTime = resumeTime - pauseTime + sumTime;
-        mIsRunning = true;
+
     }
 
     private IRunning.Stub stub = new IRunning.Stub() {

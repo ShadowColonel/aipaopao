@@ -22,6 +22,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" >
 
+
             </com.amap.api.maps.TextureMapView>
 
             <LinearLayout
@@ -71,6 +72,7 @@
                 android:src="@drawable/abc"
                 android:padding="8dp"/>
 
+            <!--倒计时:马上开始/加10s-->
             <LinearLayout
                 android:id="@+id/main_sec_linear"
                 android:layout_width="match_parent"
@@ -79,10 +81,13 @@
                 android:orientation="vertical"
                 android:visibility="gone">
 
-                <SeekBar
+                <ProgressBar
                     android:id="@+id/main_seek_bar"
                     android:layout_width="match_parent"
-                    android:layout_height="5dp" />
+                    android:layout_height="8dp"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:max="100"
+                    android:progress="0"/>
 
                 <LinearLayout
                     android:background="#e3e3e3"
@@ -137,6 +142,7 @@
                 </LinearLayout>
             </LinearLayout>
 
+            <!--锁定/暂停-->
             <LinearLayout
                 android:id="@+id/main_run_linear"
                 android:background="#e3e3e3"
@@ -192,6 +198,7 @@
                 </LinearLayout>
             </LinearLayout>
 
+            <!--解锁-->
             <LinearLayout
                 android:id="@+id/main_unlock_linear"
                 android:background="#e3e3e3"
@@ -238,6 +245,7 @@
                     android:layout_marginRight="50dp" />
             </LinearLayout>
 
+            <!--停止/继续跑步-->
             <LinearLayout
                 android:id="@+id/main_pause_linear"
                 android:background="#e3e3e3"

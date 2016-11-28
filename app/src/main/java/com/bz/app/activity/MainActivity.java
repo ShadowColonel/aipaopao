@@ -10,16 +10,13 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.RemoteException;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
-import android.widget.SeekBar;
+import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.ToggleButton;
 
 import com.amap.api.maps.AMap;
 import com.amap.api.maps.CameraUpdateFactory;
@@ -40,8 +37,6 @@ import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-
-import static com.bz.app.R.id.main_sec_linear;
 
 public class MainActivity extends BaseActivity implements View.OnClickListener {
 
@@ -65,7 +60,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     private LinearLayout mPauseLinear2;
     private LinearLayout mUnlockLinear;
     private TextView mSkipTx;
-    private SeekBar mSeekBar;
+    private ProgressBar mSeekBar;
 
     private static final String LOG_TAG = "MainActivity";
 
@@ -105,7 +100,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         mDistanceTV = (TextView) findViewById(R.id.activity_main_distance_tv);
 
 
-        mSeekBar = (SeekBar) findViewById(R.id.main_seek_bar);
+        mSeekBar = (ProgressBar) findViewById(R.id.main_seek_bar);
         mSeekBar.setPadding(0, 0, 0, 0);
         mSeekBar.setMax(100);
 
@@ -164,14 +159,14 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         try {
             switch (v.getId()) {
                 case R.id.main_running_start:
-                    mAnimImg.setVisibility(View.GONE);
+                    setLinearsGone();
                     mSecLinear.setVisibility(View.VISIBLE);
                     countDownHandler.sendEmptyMessage(0);
                     break;
                 //马上开始
                 case R.id.main_sec_linear1:
                     mRunning.start();
-                    mSecLinear.setVisibility(View.GONE);
+                    setLinearsGone();
                     mRunLinear.setVisibility(View.VISIBLE);
                     break;
                 //加10s
@@ -180,34 +175,33 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                     break;
                 //锁屏
                 case R.id.main_run_linear1:
-                    mRunLinear.setVisibility(View.GONE);
+                    setLinearsGone();
                     mUnlockLinear.setVisibility(View.VISIBLE);
                     break;
                 //暂停跑步
                 case R.id.main_run_linear2:
                     mRunning.pause();
-                    mRunLinear.setVisibility(View.GONE);
+                    setLinearsGone();
                     mPauseLinear.setVisibility(View.VISIBLE);
                     break;
                 //停止跑步
                 case R.id.main_pause_linear1:
                     mRunning.stop();
-                    mPauseLinear.setVisibility(View.GONE);
+                    setLinearsGone();
                     mAnimImg.setVisibility(View.VISIBLE);
                     break;
                 //继续跑步
                 case R.id.main_pause_linear2:
                     mRunning.resume();
+                    setLinearsGone();
                     mRunLinear.setVisibility(View.VISIBLE);
-                    mPauseLinear.setVisibility(View.GONE);
                     break;
 
                 //解锁
                 case R.id.main_unlock_linear:
-                    mUnlockLinear.setVisibility(View.GONE);
+                    setLinearsGone();
                     mRunLinear.setVisibility(View.VISIBLE);
-
-
+                    break;
             }
         } catch (RemoteException e) {
             e.printStackTrace();
@@ -215,6 +209,13 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
     }
 
+    private void setLinearsGone() {
+        mAnimImg.setVisibility(View.GONE);
+        mSecLinear.setVisibility(View.GONE);
+        mRunLinear.setVisibility(View.GONE);
+        mUnlockLinear.setVisibility(View.GONE);
+        mPauseLinear.setVisibility(View.GONE);
+    }
 
 
     //初始化地图轨迹线
@@ -290,13 +291,13 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
             }.getType();
             //location集合
             ArrayList<LatLng> locationList = gson.fromJson(latLngListStr, type);
-            mPolyOptions.addAll(locationList);
+            mPolyOptions.addAll(locationList.subList(locationList.size() - 2, locationList.size() - 1));
             aMap.addPolyline(mPolyOptions);
+
 
             if (!latLngFlag) {
                 SharedPreferences.Editor editor = getSharedPreferences("latlng", MODE_PRIVATE).edit();
                 editor.clear();
-                Log.v(LOG_TAG, "latlng---->" + nowLatLng);
                 editor.putFloat("lat", (float) nowLatLng.latitude);
                 editor.putFloat("lng", (float) nowLatLng.longitude);
                 editor.commit();
