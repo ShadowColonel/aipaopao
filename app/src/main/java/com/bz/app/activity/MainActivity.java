@@ -1,6 +1,5 @@
 package com.bz.app.activity;
 
-import android.animation.ValueAnimator;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
