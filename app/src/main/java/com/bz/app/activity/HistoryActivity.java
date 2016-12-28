@@ -3,7 +3,6 @@ package com.bz.app.activity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 
 import com.bz.app.R;
 import com.bz.app.adapter.HistoryRecyclerAdapter;
