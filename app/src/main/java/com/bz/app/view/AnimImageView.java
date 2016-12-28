@@ -93,7 +93,6 @@ public class AnimImageView extends ImageView {
         mAnimator.setFloatValues(0,100);
         mAnimator.setRepeatCount(Integer.MAX_VALUE);
         mAnimator.setRepeatMode(ValueAnimator.REVERSE);
-        mAnimator.start();
 
         mAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
@@ -127,6 +126,7 @@ public class AnimImageView extends ImageView {
 
             }
         });
+        mAnimator.start();
 
     }
 

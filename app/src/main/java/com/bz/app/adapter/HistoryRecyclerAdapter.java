@@ -52,6 +52,7 @@ public class HistoryRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         itemViewHolder.duration.setText(record.getDuration());
         itemViewHolder.speed.setText(String.format(
                 mContext.getResources().getString(R.string.speed), record.getAverageSpeed()));
+
         itemViewHolder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

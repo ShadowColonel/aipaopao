@@ -1,6 +1,7 @@
 package com.bz.app.activity;
 
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -11,7 +12,9 @@ import android.widget.TextView;
 import com.amap.api.maps.AMap;
 import com.amap.api.maps.CameraUpdateFactory;
 import com.amap.api.maps.TextureMapView;
+import com.amap.api.maps.model.BitmapDescriptorFactory;
 import com.amap.api.maps.model.LatLng;
+import com.amap.api.maps.model.MarkerOptions;
 import com.amap.api.maps.model.PolylineOptions;
 import com.bz.app.R;
 import com.bz.app.entity.RunningRecord;
@@ -24,6 +27,9 @@ public class RecordDetailsActivity extends AppCompatActivity {
     private AMap aMap;
     private TextureMapView mMapView;
     private PolylineOptions mPolyOptions;
+    private MarkerOptions mStartMarker;
+    private MarkerOptions mEndMarker;
+
 
     private TextView mDuration;
     private TextView mDistance;
@@ -69,6 +75,17 @@ public class RecordDetailsActivity extends AppCompatActivity {
         //划线
         aMap.addPolyline(mPolyOptions);
 
+        mStartMarker = new MarkerOptions();
+        mStartMarker.position(record.getStartPoint());
+        mStartMarker.title("开始跑步");
+        mStartMarker.icon(BitmapDescriptorFactory.fromResource(R.drawable.starticon3));
+        aMap.addMarker(mStartMarker);
+
+        mEndMarker = new MarkerOptions();
+        mEndMarker.position(record.getEndPoint());
+        mEndMarker.title("结束跑步");
+        mEndMarker.icon(BitmapDescriptorFactory.fromResource(R.drawable.starticon3));
+        aMap.addMarker(mEndMarker);
     }
 
     @Override

@@ -6,8 +6,10 @@
     android:padding="16dp" >
 
     <com.bz.app.view.CircleImageView
+        android:id="@+id/portrait"
         android:layout_width="72dp"
         android:layout_height="72dp"
+        android:scaleType="center"
         android:layout_above="@+id/user_name"
         android:src="@drawable/user_portrait"
         android:layout_marginBottom="15dp" />

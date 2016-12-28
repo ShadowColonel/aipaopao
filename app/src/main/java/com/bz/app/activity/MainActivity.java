@@ -1,5 +1,6 @@
 package com.bz.app.activity;
 
+import android.animation.ValueAnimator;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -33,6 +34,7 @@ import com.bz.app.service.LocationService;
 import com.bz.app.R;
 import com.bz.app.utils.Utils;
 import com.bz.app.view.AnimImageView;
+import com.bz.app.view.UnlockView;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -62,6 +64,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     private LinearLayout mUnlockLinear;
     private TextView mSkipTx;
     private ProgressBar mProgressBar;
+    private UnlockView mUnlockView;
 
     private static final String LOG_TAG = "MainActivity";
 
@@ -77,8 +80,23 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         mMapView = (TextureMapView) findViewById(R.id.map);
         mMapView.onCreate(savedInstanceState);
 
+
         init();
         initPolyline();
+
+        mUnlockView = (UnlockView)findViewById(R.id.main_unlock_view);
+        mUnlockView.setOnLockListener(new UnlockView.OnLockListener() {
+            @Override
+            public void unLock() {
+                setLinearsGone();
+                mRunLinear.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void lock() {
+
+            }
+        });
 
     }
 
@@ -128,7 +146,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         mRunLinear2.setOnClickListener(this);
         mPauseLinear1.setOnClickListener(this);
         mPauseLinear2.setOnClickListener(this);
-        mUnlockLinear.setOnClickListener(this);
 
     }
 
@@ -149,6 +166,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
             } else if (num == 0) {
                 try {
                     mRunning.start();
+                    initPolyline();
                     mSecLinear.setVisibility(View.GONE);
                     mRunLinear.setVisibility(View.VISIBLE);
                     num = 100;
@@ -175,6 +193,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                 //马上开始
                 case R.id.main_sec_linear1:
                     mRunning.start();
+                    initPolyline();
                     setLinearsGone();
                     mRunLinear.setVisibility(View.VISIBLE);
                     num = 100;
@@ -212,11 +231,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                     setLinearsGone();
                     mRunLinear.setVisibility(View.VISIBLE);
                     Log.v(LOG_TAG, "resume--->被点击");
-                    break;
-                //解锁
-                case R.id.main_unlock_linear:
-                    setLinearsGone();
-                    mRunLinear.setVisibility(View.VISIBLE);
                     break;
             }
         } catch (RemoteException e) {
@@ -309,7 +323,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
             }.getType();
             //location集合
             ArrayList<LatLng> locationList = gson.fromJson(latLngListStr, type);
-            mPolyOptions.addAll(locationList.subList(locationList.size() - 2, locationList.size() - 1));
+            mPolyOptions.add(locationList.get(locationList.size() - 1));
             aMap.addPolyline(mPolyOptions);
 
 

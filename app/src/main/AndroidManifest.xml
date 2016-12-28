@@ -60,8 +60,12 @@
             android:name=".activity.BaseActivity"
             android:theme="@style/AppTheme" />
         <activity android:name=".activity.RecordDetailsActivity" />
-        <activity android:name=".activity.WeatherActivity"
+        <activity
+            android:name=".activity.WeatherActivity"
             android:launchMode="singleTask" />
+        <activity android:name=".activity.SettingActivity"
+            android:launchMode="singleTask"/>
+        <activity android:name=".activity.PersonalActivity" ></activity>
     </application>
 
 </manifest>

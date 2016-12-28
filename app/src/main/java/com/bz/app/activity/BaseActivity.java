@@ -10,11 +10,7 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.bz.app.R;
 
@@ -23,15 +19,6 @@ public class BaseActivity extends AppCompatActivity
 
     protected DrawerLayout drawer;
     protected Toolbar toolbar;
-
-    private TextView cityTx;
-    private TextView pmTx;
-    private TextView airQualityTx;
-    private TextView weatherTx;
-    private TextView temperatureTx;
-    private ImageView weaImg;
-    private TextView indexTx;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,19 +44,12 @@ public class BaseActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        initHeader(navigationView);
-
-    }
-
-    private void initHeader(NavigationView navigationView) {
-        View headView = navigationView.getHeaderView(0);
-        cityTx = (TextView) headView.findViewById(R.id.header_weather_city_tx);
-        pmTx = (TextView) headView.findViewById(R.id.header_weather_pm2_5_tx);
-        airQualityTx = (TextView) headView.findViewById(R.id.header_weather_air_tx);
-        weatherTx = (TextView) headView.findViewById(R.id.header_weather_wea_tx);
-        temperatureTx = (TextView) headView.findViewById(R.id.header_weather_temperature_tx);
-        indexTx = (TextView) headView.findViewById(R.id.header_weather_index_tx);
-        weaImg = (ImageView) headView.findViewById(R.id.header_weather_img);
+//        View view = navigationView.getHeaderView(0);
+//        TextView name = (TextView) view.findViewById(R.id.user_name);
+//        CircleImageView port = (CircleImageView) view.findViewById(R.id.portrait);
+//        SharedPreferences pref = getSharedPreferences("user", MODE_PRIVATE);
+//        name.setText(pref.getString("name", ""));
+//        port.setImageURI(Uri.parse(pref.getString("path", "")));
     }
 
     @Override
@@ -106,7 +86,8 @@ public class BaseActivity extends AppCompatActivity
             startActivity(historyIntent);
 
         } else if (id == R.id.nav_setting) {
-
+            Intent settingIntent = new Intent(this, SettingActivity.class);
+            startActivity(settingIntent);
         } else if (id == R.id.nav_help) {
 
         } else if (id == R.id.nav_about) {
