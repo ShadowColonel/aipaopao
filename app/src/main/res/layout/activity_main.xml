@@ -28,26 +28,38 @@
                 android:layout_width="match_parent"
                 android:layout_height="120dp"
                 android:background="#e0e3e3e3"
-                android:orientation="horizontal">
+                android:orientation="vertical" >
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp">
+
+                    <TextView
+                        android:id="@+id/activity_main_time_tv"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="00:00:00"
+                        android:textSize="30sp" />
+
+                    <TextView
+                        android:id="@+id/activity_main_distance_tv"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="0m"
+                        android:textSize="30sp" />
+                </LinearLayout>
 
                 <TextView
-                    android:id="@+id/activity_main_time_tv"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
+                    android:id="@+id/fragment_map_speed_tv"
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
                     android:gravity="center"
-                    android:text="00:00:00"
-                    android:textSize="30sp" />
-
-                <TextView
-                    android:id="@+id/activity_main_distance_tv"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="0m"
-                    android:textSize="30sp" />
-
+                    android:text="--m/s"
+                    android:textSize="30sp"/>
             </LinearLayout>
 
             <com.bz.app.view.AnimImageView

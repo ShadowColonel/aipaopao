@@ -23,6 +23,7 @@ import com.amap.api.location.AMapLocationClientOption;
 import com.amap.api.location.AMapLocationListener;
 import com.amap.api.maps.AMapUtils;
 import com.amap.api.maps.model.LatLng;
+import com.bz.app.Main2Activity;
 import com.bz.app.R;
 import com.bz.app.activity.MainActivity;
 import com.bz.app.database.DBAdapter;
@@ -48,6 +49,7 @@ public class LocationService extends Service implements AMapLocationListener {
     private long mStartTime = -1;  //开始跑步时间
     private IRunningCallback mCallback;
     private boolean mIsRunning = false;  //跑步标志位
+    private boolean mIsPause = false;
     private RunningRecord mRecord;  //一条跑步记录
     private DBAdapter mDBAdapter;  //数据库操作
     private Notification notification; //通知
@@ -75,7 +77,7 @@ public class LocationService extends Service implements AMapLocationListener {
         mLocationClient.setLocationListener(this);
 
         SharedPreferences pref = getSharedPreferences("modeData", MODE_PRIVATE);
-        int locationMode = pref.getInt("locationMode", 1);
+        int locationMode = pref.getInt("locationMode", 3);
         Log.v(LOG_TAG, "locationMode------->" + locationMode);
         //定位参数
         mOption = new AMapLocationClientOption();
@@ -114,10 +116,8 @@ public class LocationService extends Service implements AMapLocationListener {
     public void onLocationChanged(AMapLocation aMapLocation) {
         if (aMapLocation != null) {
             if (aMapLocation.getErrorCode() == 0) {
-
                 Gson gson = new Gson();
                 LatLng mLatLng = new LatLng(aMapLocation.getLatitude(), aMapLocation.getLongitude());
-
                 try {
                     //如果是跑步，则把location加入集合，计算距离
                     if (mIsRunning) {
@@ -160,23 +160,17 @@ public class LocationService extends Service implements AMapLocationListener {
             mDBAdapter.open();
             LatLng firstLocation = list.get(0);
             LatLng lastLocation = list.get(list.size() - 1);
-
             String startPoint = latLngToString(firstLocation);
             String endPoint = latLngToString(lastLocation);
             String pathLinePoints = getPathLineString(list);
-
             //公里
             String distanceStr = df.format(distance / 1000.0);
-
             String durationStr = Utils.getTimeStr((int) (mDisplayTime / 1000));
-
             //速度:km/min
             String average_speed = df.format((distance / 1000.0) / (mDisplayTime / 6000));
-
             mDBAdapter.insertRecord(startPoint, endPoint, pathLinePoints, distanceStr,
                     durationStr, average_speed, time);
             mDBAdapter.close();
-
         } else {
             Log.e(LOG_TAG, "没有记录到数据库");
         }
@@ -186,7 +180,6 @@ public class LocationService extends Service implements AMapLocationListener {
     //将经纬度集合，转换为string
     private String getPathLineString(List<LatLng> list) {
         StringBuffer pathLine = new StringBuffer();
-
         for (int i = 1; i < list.size() - 1; i++) {
             pathLine.append(latLngToString(list.get(i))).append(";");
         }
@@ -208,14 +201,10 @@ public class LocationService extends Service implements AMapLocationListener {
             if (mIsRunning){
                 if (mCallback != null) try {
                     mDisplayTime = System.currentTimeMillis() - mStartTime - mDelayTime;
-                    Log.v(LOG_TAG, "mDelayTime--->" + mDelayTime);
-                    Log.v(LOG_TAG, "mDisplayTime--->" + mDisplayTime);
-
                     mCallback.timeUpdate(mDisplayTime);
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }
-
                 mTimeHandler.sendEmptyMessageDelayed(0,1000);
             }
             return false;
@@ -226,7 +215,6 @@ public class LocationService extends Service implements AMapLocationListener {
      * 开始跑步
      */
     private void startRunning() {
-
         mStartTime = System.currentTimeMillis(); //开始跑步时间
         list.clear();
         distance = 0f;
@@ -242,6 +230,8 @@ public class LocationService extends Service implements AMapLocationListener {
      * 结束跑步
      */
     private void stopRunning() {
+        mIsRunning = false;
+        mIsPause = false;
         saveRecord(mRecord.getDate());
     }
 
@@ -251,6 +241,7 @@ public class LocationService extends Service implements AMapLocationListener {
      */
     private void onPauseRunning() {
         mIsRunning = false;
+        mIsPause = true;
         mPauseTime = System.currentTimeMillis();
     }
 
@@ -304,10 +295,15 @@ public class LocationService extends Service implements AMapLocationListener {
         }
 
         @Override
+        public boolean isPause() throws RemoteException {
+            return mIsPause;
+        }
+
+        @Override
         public void openNotification() throws RemoteException {
 
             builder = new NotificationCompat.Builder(mContext);
-            Intent notificationIntent = new Intent(mContext, MainActivity.class);
+            Intent notificationIntent = new Intent(mContext, Main2Activity.class);
             PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, notificationIntent, 0);
             builder.setSmallIcon(R.drawable.icon);
             Bitmap largeIcon = BitmapFactory.decodeResource(getResources(), R.drawable.icon);
@@ -316,7 +312,6 @@ public class LocationService extends Service implements AMapLocationListener {
             builder.setContentText(getNotificationContent());
             builder.setContentIntent(pendingIntent);
             notification = builder.build();
-
             startForeground(1, notification);
             mIsShowNotification = true;
 

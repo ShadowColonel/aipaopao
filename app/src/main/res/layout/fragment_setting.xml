@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/activity_setting"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    tools:context="com.bz.app.activity.SettingActivity">
-
-    <include layout="@layout/toolbar" />
+              xmlns:tools="http://schemas.android.com/tools"
+              android:id="@+id/activity_setting"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical"
+              tools:context="com.bz.app.activity.SettingActivity">
 
     <TextView
         android:id="@+id/setting_personal"
@@ -17,15 +15,17 @@
         android:layout_marginRight="16dp"
         android:layout_marginLeft="16dp"
         android:text="个人资料"
+        android:textSize="16dp"
+        android:textColor="#8574a6"
         android:gravity="center_vertical"
-        android:drawableRight="@drawable/icon_change" />
+        android:drawableRight="@drawable/ic_keyboard_arrow_right_black_24dp" />
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginRight="16dp"
         android:layout_marginLeft="16dp"
-        android:background="#000" />
+        android:background="#50cac6c6" />
 
     <TextView
         android:id="@+id/setting_alert"
@@ -36,14 +36,16 @@
         android:layout_marginLeft="16dp"
         android:text="跑步提醒"
         android:gravity="center_vertical"
-        android:drawableRight="@drawable/icon_change" />
+        android:textSize="16dp"
+        android:textColor="#8574a6"
+        android:drawableRight="@drawable/ic_keyboard_arrow_right_black_24dp" />
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginRight="16dp"
         android:layout_marginLeft="16dp"
-        android:background="#000" />
+        android:background="#50cac6c6" />
 
     <TextView
         android:id="@+id/setting_clear"
@@ -54,14 +56,16 @@
         android:layout_marginLeft="16dp"
         android:text="清理缓存"
         android:gravity="center_vertical"
-        android:drawableRight="@drawable/icon_change" />
+        android:textSize="16dp"
+        android:textColor="#8574a6"
+        android:drawableRight="@drawable/ic_keyboard_arrow_right_black_24dp" />
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginRight="16dp"
         android:layout_marginLeft="16dp"
-        android:background="#000" />
+        android:background="#50cac6c6" />
 
     <TextView
         android:id="@+id/setting_statistics"
@@ -72,28 +76,31 @@
         android:layout_marginLeft="16dp"
         android:text="位置统计频率"
         android:gravity="center_vertical"
-        android:drawableRight="@drawable/icon_change" />
+        android:textSize="16dp"
+        android:textColor="#8574a6"
+        android:drawableRight="@drawable/ic_keyboard_arrow_right_black_24dp"/>
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginRight="16dp"
         android:layout_marginLeft="16dp"
-        android:background="#000" />
+        android:background="#50cac6c6" />
 
-        <Switch
-            android:id="@+id/setting_notification"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="48dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginRight="16dp"
-            android:text="后台通知"/>
+    <Switch
+        android:id="@+id/setting_notification"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:text="后台通知"/>
 
-        <Switch
-            android:id="@+id/setting_update"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            android:text="自动检测新版本" />
+    <Switch
+        android:id="@+id/setting_update"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:text="自动检测新版本" />
+
 </LinearLayout>

@@ -1,11 +1,13 @@
 package com.bz.app.activity;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 
@@ -49,6 +51,7 @@ public class RecordDetailsActivity extends AppCompatActivity {
         toolbar.setTitle(getCurrentDate(record.getDate()));
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        toolbar.setOnMenuItemClickListener(onMenuItemClick);
 
         mDuration = (TextView) findViewById(R.id.details_duration);
         mDistance = (TextView) findViewById(R.id.details_distance);
@@ -77,16 +80,16 @@ public class RecordDetailsActivity extends AppCompatActivity {
 
         mStartMarker = new MarkerOptions();
         mStartMarker.position(record.getStartPoint());
-        mStartMarker.title("开始跑步");
-        mStartMarker.icon(BitmapDescriptorFactory.fromResource(R.drawable.starticon3));
+        mStartMarker.icon(BitmapDescriptorFactory.fromResource(R.drawable.icon_st));
         aMap.addMarker(mStartMarker);
 
         mEndMarker = new MarkerOptions();
         mEndMarker.position(record.getEndPoint());
-        mEndMarker.title("结束跑步");
-        mEndMarker.icon(BitmapDescriptorFactory.fromResource(R.drawable.starticon3));
+        mEndMarker.icon(BitmapDescriptorFactory.fromResource(R.drawable.icon_en));
         aMap.addMarker(mEndMarker);
     }
+
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -97,10 +100,49 @@ public class RecordDetailsActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.action_record, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    private Toolbar.OnMenuItemClickListener onMenuItemClick = new Toolbar.OnMenuItemClickListener() {
+        @Override
+        public boolean onMenuItemClick(MenuItem item) {
+            switch (item.getItemId()) {
+                case R.id.action_delete:
+                    deleteRecord();
+                    break;
+                case R.id.action_share:
+
+                    break;
+            }
+            return false;
+        }
+    };
+
+    private void deleteRecord() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder
+                .setTitle("提示")
+                .setMessage("确定删除本条记录？")
+                .setPositiveButton("是", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                    }
+                })
+                .setNegativeButton("否", null)
+                .create()
+                .show();
+
+    }
+
+
     //格式化当前日期
     private String getCurrentDate(String date) {
         long time = Long.parseLong(date);
-        SimpleDateFormat format = new SimpleDateFormat("MM月dd, yyyy HH:mm");
+        SimpleDateFormat format = new SimpleDateFormat("yyyy/MM/dd HH:mm");
         Date curDate = new Date(time);
         String d = format.format(curDate);
         return d;

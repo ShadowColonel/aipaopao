@@ -10,6 +10,7 @@ interface IRunning {
     void pause();
     void resume();
     boolean isRunning();
+    boolean isPause();
     void openNotification();
     void closeNotification();
     void chooseLocationMode(int locationMode);

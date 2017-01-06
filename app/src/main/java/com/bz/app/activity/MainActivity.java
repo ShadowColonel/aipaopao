@@ -79,7 +79,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         mMapView = (TextureMapView) findViewById(R.id.map);
         mMapView.onCreate(savedInstanceState);
 
-
         init();
         initPolyline();
 

@@ -1,0 +1,53 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical" >
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="34dp"
+        >
+        <ImageView
+            android:layout_width="114dp"
+            android:layout_height="114dp"
+            android:src="@drawable/icon"
+            android:gravity="center"
+            android:layout_gravity="center"
+            />
+
+    </FrameLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="28dp"
+        android:layout_marginLeft="16dp"
+        android:text="Running应用介绍"
+        android:textSize="22dp"
+        android:textColor="#8574a6"
+        />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:paddingTop="10dp"
+        android:lineSpacingExtra="6dp"
+        android:typeface="monospace"
+        android:textSize="16dp"
+        android:text="    本项目目标是在借助移动互联网技术帮助用户记录有效跑步记录数据的基础之上，逐步以用户为中心，建立个人运动数据中心和分享平台，帮助用户提高运动效率和运动效果，并且在一定程度上避免运动过度对用户造成的运动伤害。"
+        />
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:paddingTop="10dp"
+        android:lineSpacingExtra="6dp"
+        android:typeface="monospace"
+        android:textSize="16dp"
+        android:text="    本系统能帮助用户建立和管理用户个人数据移动中心，能够帮助用户自动记录跑步数据。本项目提供统计功能，帮助用户管理自己的运动项目。"
+        />
+</LinearLayout>

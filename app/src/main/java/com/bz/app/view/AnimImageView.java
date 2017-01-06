@@ -6,7 +6,9 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.renderscript.Sampler;
 import android.util.AttributeSet;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.ImageView;
 
 /**
@@ -91,8 +93,9 @@ public class AnimImageView extends ImageView {
         mAnimator = new ValueAnimator();
         mAnimator.setDuration(1000);
         mAnimator.setFloatValues(0,100);
-        mAnimator.setRepeatCount(Integer.MAX_VALUE);
-        mAnimator.setRepeatMode(ValueAnimator.REVERSE);
+        mAnimator.setRepeatCount(-1);  //-1表示无线循环
+        mAnimator.setRepeatMode(ValueAnimator.REVERSE);  //reverse：逆向重复，restart：连续重复
+        mAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
 
         mAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
@@ -105,27 +108,7 @@ public class AnimImageView extends ImageView {
 
             }
         });
-        mAnimator.addListener(new Animator.AnimatorListener() {
-            @Override
-            public void onAnimationStart(Animator animation) {
 
-            }
-
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                ani();
-            }
-
-            @Override
-            public void onAnimationCancel(Animator animation) {
-
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animation) {
-
-            }
-        });
         mAnimator.start();
 
     }
