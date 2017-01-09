@@ -1,5 +1,6 @@
 package com.bz.app.adapter;
 
+import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -21,7 +22,10 @@ public class ViewPagerAdapter extends FragmentPagerAdapter {
 
     @Override
     public Fragment getItem(int position) {
-        return new DataFragment();
+        DataFragment dataFragment = new DataFragment();
+        Bundle bundle = new Bundle();
+        bundle.putInt("currentPosition", position);
+        return dataFragment;
     }
 
     @Override

@@ -7,7 +7,6 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Handler;
@@ -23,14 +22,13 @@ import com.amap.api.location.AMapLocationClientOption;
 import com.amap.api.location.AMapLocationListener;
 import com.amap.api.maps.AMapUtils;
 import com.amap.api.maps.model.LatLng;
-import com.bz.app.Main2Activity;
-import com.bz.app.R;
+import com.bz.app.IRunning;
+import com.bz.app.IRunningCallback;
 import com.bz.app.activity.MainActivity;
+import com.bz.app.R;
 import com.bz.app.database.DBAdapter;
 import com.bz.app.entity.RunningRecord;
 import com.bz.app.utils.GlobalContext;
-import com.bz.app.IRunning;
-import com.bz.app.IRunningCallback;
 import com.bz.app.utils.Utils;
 import com.google.gson.Gson;
 
@@ -75,29 +73,16 @@ public class LocationService extends Service implements AMapLocationListener {
     private void init() {
         mLocationClient = new AMapLocationClient(mContext);
         mLocationClient.setLocationListener(this);
-
-        SharedPreferences pref = getSharedPreferences("modeData", MODE_PRIVATE);
-        int locationMode = pref.getInt("locationMode", 3);
-        Log.v(LOG_TAG, "locationMode------->" + locationMode);
-        //定位参数
-        mOption = new AMapLocationClientOption();
-        mOption.setInterval(3000);
-        switch (locationMode) {
-            case 1:
-                mOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);
-                break;
-            case 2:
-                mOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Battery_Saving);
-                break;
-            case 3:
-                mOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Device_Sensors);
-                break;
-            default:
-                mOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);
-                break;
-        }
-        mLocationClient.setLocationOption(mOption);
+        mLocationClient.setLocationOption(getOption());
         mLocationClient.startLocation();
+    }
+
+    private AMapLocationClientOption getOption() {
+        mOption = new AMapLocationClientOption();
+        mOption.setInterval(2000);
+        mOption.setLocationMode(!mIsRunning ? AMapLocationClientOption.AMapLocationMode.Hight_Accuracy :
+                AMapLocationClientOption.AMapLocationMode.Device_Sensors);
+        return mOption;
     }
 
     @Override
@@ -167,7 +152,7 @@ public class LocationService extends Service implements AMapLocationListener {
             String distanceStr = df.format(distance / 1000.0);
             String durationStr = Utils.getTimeStr((int) (mDisplayTime / 1000));
             //速度:km/min
-            String average_speed = df.format((distance / 1000.0) / (mDisplayTime / 6000));
+            String average_speed = df.format((distance / 1000.0) / (mDisplayTime / 60000));
             mDBAdapter.insertRecord(startPoint, endPoint, pathLinePoints, distanceStr,
                     durationStr, average_speed, time);
             mDBAdapter.close();
@@ -303,7 +288,7 @@ public class LocationService extends Service implements AMapLocationListener {
         public void openNotification() throws RemoteException {
 
             builder = new NotificationCompat.Builder(mContext);
-            Intent notificationIntent = new Intent(mContext, Main2Activity.class);
+            Intent notificationIntent = new Intent(mContext, MainActivity.class);
             PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, notificationIntent, 0);
             builder.setSmallIcon(R.drawable.icon);
             Bitmap largeIcon = BitmapFactory.decodeResource(getResources(), R.drawable.icon);
@@ -349,39 +334,6 @@ public class LocationService extends Service implements AMapLocationListener {
             stopForeground(true);
             mIsShowNotification = false;
         }
-
-        @Override
-        public void chooseLocationMode(int locationMode) throws RemoteException {
-            setLocationMode(locationMode);
-        }
     };
 
-    private void setLocationMode(int locationMode) {
-        switch (locationMode) {
-            case 1:
-                mOption = new AMapLocationClientOption();
-                mOption.setInterval(3000);
-                mOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);
-                mLocationClient.setLocationOption(mOption);
-                mLocationClient.startLocation();
-                break;
-            case 2:
-                mOption = new AMapLocationClientOption();
-                mOption.setInterval(3000);
-                mOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Battery_Saving);
-                mLocationClient.setLocationOption(mOption);
-                mLocationClient.startLocation();
-                break;
-            case 3:
-                mOption = new AMapLocationClientOption();
-                mOption.setInterval(3000);
-                mOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Device_Sensors);
-                mLocationClient.setLocationOption(mOption);
-                mLocationClient.startLocation();
-                break;
-        }
-        SharedPreferences.Editor editor = getSharedPreferences("modeData", MODE_PRIVATE).edit();
-        editor.putInt("locationMode", locationMode);
-        editor.commit();
-    }
 }

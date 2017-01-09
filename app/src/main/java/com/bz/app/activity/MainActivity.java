@@ -1,410 +1,202 @@
 package com.bz.app.activity;
 
-import android.content.ComponentName;
-import android.content.Intent;
-import android.content.ServiceConnection;
-import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.IBinder;
-import android.os.Message;
-import android.os.RemoteException;
+import android.support.design.widget.NavigationView;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
-import android.widget.TextView;
+import android.widget.Toast;
 
-import com.amap.api.maps.AMap;
-import com.amap.api.maps.CameraUpdateFactory;
-import com.amap.api.maps.TextureMapView;
-import com.amap.api.maps.model.BitmapDescriptorFactory;
-import com.amap.api.maps.model.LatLng;
-import com.amap.api.maps.model.Marker;
-import com.amap.api.maps.model.MarkerOptions;
-import com.amap.api.maps.model.PolylineOptions;
-import com.bz.app.IRunning;
-import com.bz.app.IRunningCallback;
-import com.bz.app.service.LocationService;
 import com.bz.app.R;
-import com.bz.app.utils.Utils;
-import com.bz.app.view.AnimImageView;
-import com.bz.app.view.UnlockView;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import com.bz.app.fragment.AMapFragment;
+import com.bz.app.fragment.AboutFragment;
+import com.bz.app.fragment.HelpFragment;
+import com.bz.app.fragment.HistoryFragment;
+import com.bz.app.fragment.SettingFragment;
+import com.bz.app.fragment.StatisticsFragment;
 
-import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.List;
 
-public class MainActivity extends BaseActivity implements View.OnClickListener {
+import butterknife.ButterKnife;
 
-    private TextureMapView mMapView = null;  //地图view
-    private AMap aMap;  //地图对象
-    private PolylineOptions mPolyOptions;  //在地图上画出轨迹
-    private Marker mLocationMarker = null;
-    private TextView mTimeTV;  //时间
-    private TextView mDistanceTV; //距离
-    private IRunning mRunning;  //AIDL接口
-    private MarkerOptions markerOptions;
-    private AnimImageView mAnimImg;
-    private LinearLayout mSecLinear;
-    private LinearLayout mSecLinear1;
-    private LinearLayout mSecLinear2;
-    private LinearLayout mRunLinear;
-    private LinearLayout mRunLinear1;
-    private LinearLayout mRunLinear2;
-    private LinearLayout mPauseLinear;
-    private LinearLayout mPauseLinear1;
-    private LinearLayout mPauseLinear2;
-    private LinearLayout mUnlockLinear;
-    private TextView mSkipTx;
-    private ProgressBar mProgressBar;
-    private UnlockView mUnlockView;
+public class MainActivity extends AppCompatActivity
+        implements NavigationView.OnNavigationItemSelectedListener {
 
-    private static final String LOG_TAG = "MainActivity";
-
+    private Toolbar toolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main, "开始跑步");
+        setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar.setTitle("开始跑步");
+        setSupportActionBar(toolbar);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        toolbar.setOnMenuItemClickListener(onMenuItemClick);
+//        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+//        fab.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+//                        .setAction("Action", null).show();
+//            }
+//        });
 
-        mMapView = (TextureMapView) findViewById(R.id.map);
-        mMapView.onCreate(savedInstanceState);
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawer.setDrawerListener(toggle);
+        toggle.syncState();
 
-        init();
-        initPolyline();
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
 
-        mUnlockView = (UnlockView)findViewById(R.id.main_unlock_view);
-        mUnlockView.setOnLockListener(new UnlockView.OnLockListener() {
-            @Override
-            public void unLock() {
-                setLinearsGone();
-                mRunLinear.setVisibility(View.VISIBLE);
-            }
-
-            @Override
-            public void lock() {
-
-            }
-        });
-
+        addMapFragment();
     }
 
-
-    private void init() {
-
-        if (aMap == null) {
-            aMap = mMapView.getMap();
-            aMap.setMyLocationType(AMap.LOCATION_TYPE_LOCATE);
-            //地图初始缩放级别
-            aMap.moveCamera(CameraUpdateFactory.zoomTo(16));
-            markerOptions = new MarkerOptions()
-                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.location_marker));
-            mLocationMarker = aMap.addMarker(markerOptions);
-        }
-
-        //显示跑步计时
-        mTimeTV = (TextView) findViewById(R.id.activity_main_time_tv);
-        //显示跑步距离
-        mDistanceTV = (TextView) findViewById(R.id.activity_main_distance_tv);
-
-
-        mProgressBar = (ProgressBar) findViewById(R.id.main_progress_bar);
-        mProgressBar.setPadding(0, 0, 0, 0);
-        mProgressBar.setMax(progressMax);
-
-        mSecLinear = (LinearLayout) findViewById(R.id.main_sec_linear);
-        mSecLinear1 = (LinearLayout) findViewById(R.id.main_sec_linear1);
-        mSecLinear2 = (LinearLayout) findViewById(R.id.main_sec_linear2);
-        mSkipTx = (TextView) findViewById(R.id.main_sec_tx1);
-
-        mRunLinear = (LinearLayout) findViewById(R.id.main_run_linear);
-        mRunLinear1 = (LinearLayout) findViewById(R.id.main_run_linear1);
-        mRunLinear2 = (LinearLayout) findViewById(R.id.main_run_linear2);
-
-        mPauseLinear = (LinearLayout) findViewById(R.id.main_pause_linear);
-        mPauseLinear1 = (LinearLayout) findViewById(R.id.main_pause_linear1);
-        mPauseLinear2 = (LinearLayout) findViewById(R.id.main_pause_linear2);
-
-        mUnlockLinear = (LinearLayout) findViewById(R.id.main_unlock_linear);
-
-        mAnimImg = (AnimImageView)findViewById(R.id.main_running_start);
-        mAnimImg.setOnClickListener(this);
-        mSecLinear1.setOnClickListener(this);
-        mSecLinear2.setOnClickListener(this);
-        mRunLinear1.setOnClickListener(this);
-        mRunLinear2.setOnClickListener(this);
-        mPauseLinear1.setOnClickListener(this);
-        mPauseLinear2.setOnClickListener(this);
-
-    }
-
-
-    private int num = 100;  //十秒準備時間
-    private int progressMax = 100;  //progressbar最大值
-    private Handler mCountDownHandler = new Handler(new Handler.Callback() {
-        @Override
-        public boolean handleMessage(Message msg) {
-            if (num > 0) {
-                if (num % 10 == 0) {
-                    mSkipTx.setText(num / 10 + "s 后開始");
-                }
-                mProgressBar.setProgress(progressMax - num);
-                num--;
-                Log.v(LOG_TAG, "progress---->" + (100 - num));
-                mCountDownHandler.sendEmptyMessageDelayed(0, 100);
-            } else if (num == 0) {
-                try {
-                    mRunning.start();
-                    initPolyline();
-                    mSecLinear.setVisibility(View.GONE);
-                    mRunLinear.setVisibility(View.VISIBLE);
-                    num = 100;
-                    mProgressBar.setProgress(0);
-                    progressMax = 100;
-                    mProgressBar.setMax(progressMax);
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
-            }
-            return false;
-        }
-    });
-
+    private long tempTime;
     @Override
-    public void onClick(View v) {
-        try {
-            switch (v.getId()) {
-                case R.id.main_running_start:
-                    setLinearsGone();
-                    mSecLinear.setVisibility(View.VISIBLE);
-                    mCountDownHandler.sendEmptyMessageDelayed(0, 100);
-                    break;
-                //马上开始
-                case R.id.main_sec_linear1:
-                    mRunning.start();
-                    initPolyline();
-                    setLinearsGone();
-                    mRunLinear.setVisibility(View.VISIBLE);
-                    num = 100;
-                    mProgressBar.setProgress(0);
-                    progressMax = 100;
-                    mProgressBar.setMax(progressMax);
-                    mCountDownHandler.removeMessages(0);
-                    break;
-                //加10s
-                case R.id.main_sec_linear2:
-                    num += 100;
-                    progressMax += 100;
-                    mProgressBar.setMax(progressMax);
-                    break;
-                //锁屏
-                case R.id.main_run_linear1:
-                    setLinearsGone();
-                    mUnlockLinear.setVisibility(View.VISIBLE);
-                    break;
-                //暂停跑步
-                case R.id.main_run_linear2:
-                    mRunning.pause();
-                    setLinearsGone();
-                    mPauseLinear.setVisibility(View.VISIBLE);
-                    break;
-                //停止跑步
-                case R.id.main_pause_linear1:
-                    mRunning.stop();
-                    setLinearsGone();
-                    mAnimImg.setVisibility(View.VISIBLE);
-                    break;
-                //继续跑步
-                case R.id.main_pause_linear2:
-                    mRunning.resume();
-                    setLinearsGone();
-                    mRunLinear.setVisibility(View.VISIBLE);
-                    Log.v(LOG_TAG, "resume--->被点击");
-                    break;
-            }
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    private void setLinearsGone() {
-        mAnimImg.setVisibility(View.GONE);
-        mSecLinear.setVisibility(View.GONE);
-        mRunLinear.setVisibility(View.GONE);
-        mUnlockLinear.setVisibility(View.GONE);
-        mPauseLinear.setVisibility(View.GONE);
-    }
-
-
-    //初始化地图轨迹线
-    private void initPolyline() {
-        mPolyOptions = new PolylineOptions();
-        mPolyOptions.color(Color.GREEN);
-        mPolyOptions.width(10f);
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.setting_location_mode, menu);
-        return super.onCreateOptionsMenu(menu);
-    }
-
-    private Toolbar.OnMenuItemClickListener onMenuItemClick = new Toolbar.OnMenuItemClickListener() {
-        @Override
-        public boolean onMenuItemClick(MenuItem item) {
-            try {
-                switch (item.getItemId()) {
-                    case R.id.high_accuracy:
-                        mRunning.chooseLocationMode(1);
-                        break;
-                    case R.id.battery_saving:
-                        mRunning.chooseLocationMode(2);
-                        break;
-                    case R.id.device_sensors:
-                        mRunning.chooseLocationMode(3);
-                        break;
-                }
-            } catch (RemoteException e) {
-                e.printStackTrace();
-            }
-            return false;
-        }
-    };
-
-    private ServiceConnection connection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            mRunning = IRunning.Stub.asInterface(service);
-            try {
-                mRunning.registCallback(callback);
-                if (mRunning.isRunning()) {
-                    mRunning.closeNotification();
-                    setLinearsGone();
-                    mRunLinear.setVisibility(View.VISIBLE);
-                }
-            } catch (RemoteException e) {
-                e.printStackTrace();
+    public void onBackPressed() {
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
+        } else {
+            if (System.currentTimeMillis() - tempTime > 2000) {
+                Toast.makeText(MainActivity.this, "再点一次，退出", Toast.LENGTH_SHORT).show();
+                tempTime = System.currentTimeMillis();
+            } else {
+                super.onBackPressed();
             }
         }
+    }
 
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-        }
-    };
+//    @Override
+//    public boolean onCreateOptionsMenu(Menu menu) {
+//        // Inflate the menu; this adds items to the action bar if it is present.
+//        getMenuInflater().inflate(R.menu.action_record, menu);
+//        return true;
+//    }
+//
+//    @Override
+//    public boolean onOptionsItemSelected(MenuItem item) {
+//        // Handle action bar item clicks here. The action bar will
+//        // automatically handle clicks on the Home/Up button, so long
+//        // as you specify a parent activity in AndroidManifest.xml.
+//        int id = item.getItemId();
+//
+//        //noinspection SimplifiableIfStatement
+//        if (id == R.id.action_share) {
+//            return true;
+//        }
+//
+//        return super.onOptionsItemSelected(item);
+//    }
 
-    private boolean latLngFlag = false;  //是否已发送经纬信息
-    private IRunningCallback callback = new IRunningCallback.Stub() {
-        @Override
-        public void notifyData(float distance, String latLngListStr, String nowLatLngStr) throws RemoteException {
-            mDistanceHandler.sendEmptyMessage((int) distance);
-            Gson gson = new Gson();
-            //当前定位
-            LatLng nowLatLng = gson.fromJson(nowLatLngStr, LatLng.class);
+    @SuppressWarnings("StatementWithEmptyBody")
+    @Override
+    public boolean onNavigationItemSelected(MenuItem item) {
+        // Handle navigation view item clicks here.
+        int id = item.getItemId();
 
-            //添加Marker显示定位
-            mLocationMarker.setPosition(nowLatLng);
-            //每次定位移动到地图中心
-            aMap.moveCamera(CameraUpdateFactory.changeLatLng(nowLatLng));
-
-            //跑步轨迹
-            Type type = new TypeToken<ArrayList<LatLng>>() {
-            }.getType();
-            //location集合
-            ArrayList<LatLng> locationList = gson.fromJson(latLngListStr, type);
-            mPolyOptions.add(locationList.get(locationList.size() - 1));
-            aMap.addPolyline(mPolyOptions);
-
-
-            if (!latLngFlag) {
-                SharedPreferences.Editor editor = getSharedPreferences("latlng", MODE_PRIVATE).edit();
-                editor.clear();
-                editor.putFloat("lat", (float) nowLatLng.latitude);
-                editor.putFloat("lng", (float) nowLatLng.longitude);
-                editor.commit();
-                latLngFlag = true;
+        if (id == R.id.nav_start) {
+            toolbar.setTitle("开始跑步");
+            FragmentManager fm = getSupportFragmentManager();
+            FragmentTransaction ft = fm.beginTransaction();
+            Log.d(TAG, "startrunning1--->" + mFragmentList.size());
+            if (mFragmentList.size() == 2) {
+                ft.remove(mFragmentList.get(1));
+                mFragmentList.remove(1);
             }
-        }
-
-        @Override
-        public void timeUpdate(long time) throws RemoteException {
-            mTimeHandler.sendEmptyMessage((int) (time / 1000));
-        }
-    };
-
-    //更新距离
-    private Handler mDistanceHandler = new Handler(new Handler.Callback() {
-        @Override
-        public boolean handleMessage(Message msg) {
-            mDistanceTV.setText(msg.what + "m");
-            return false;
-        }
-    });
-
-    //更新时间
-    private Handler mTimeHandler = new Handler(new Handler.Callback() {
-        @Override
-        public boolean handleMessage(Message msg) {
-            mTimeTV.setText(Utils.getTimeStr(msg.what));
-            return false;
-        }
-    });
-
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        mMapView.onDestroy();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        mMapView.onResume();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        mMapView.onPause();
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        mMapView.onSaveInstanceState(outState);
-        super.onSaveInstanceState(outState);
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        try {
-            //正在跑步，开启通知
-            if (mRunning.isRunning()) {
-                mRunning.openNotification();
+            Log.d(TAG, "startrunning2--->" + mFragmentList.size());
+            ft.show(mapFragment);
+            ft.commitAllowingStateLoss();
+        } else if (id == R.id.nav_data) {
+            toolbar.setTitle("数据统计");
+            if (mStatisticsFragment == null) {
+                mStatisticsFragment = new StatisticsFragment();
             }
-            mRunning.unregistCallback(callback);
-        } catch (RemoteException e) {
-            e.printStackTrace();
+            replaceFragment(mStatisticsFragment);
+        } else if (id == R.id.nav_history) {
+            toolbar.setTitle("历史记录");
+            if (mHistoryFragment == null) {
+                mHistoryFragment = new HistoryFragment();
+            }
+            replaceFragment(mHistoryFragment);
+        } else if (id == R.id.nav_setting) {
+            toolbar.setTitle("设置");
+            if (mSettingFragment == null) {
+                mSettingFragment = new SettingFragment();
+            }
+            replaceFragment(mSettingFragment);
+        } else if (id == R.id.nav_help) {
+            toolbar.setTitle("帮助");
+            if (mHelpFragment == null) {
+                mHelpFragment = new HelpFragment();
+            }
+            replaceFragment(mHelpFragment);
+        } else if (id == R.id.nav_about) {
+            toolbar.setTitle("关于");
+            if (mAboutFragment == null) {
+                mAboutFragment = new AboutFragment();
+            }
+            replaceFragment(mAboutFragment);
         }
-        unbindService(connection);
+
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer.closeDrawer(GravityCompat.START);
+        return true;
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        Intent intent = new Intent(this, LocationService.class);
-        startService(intent);
-        bindService(intent, connection, BIND_AUTO_CREATE);
-    }
+    private AMapFragment mapFragment;
+    private AboutFragment mAboutFragment;
+    private HelpFragment mHelpFragment;
+    private HistoryFragment mHistoryFragment;
+    private SettingFragment mSettingFragment;
+    private StatisticsFragment mStatisticsFragment;
+    private List<Fragment> mFragmentList = new ArrayList<>();
 
+    private void addMapFragment() {
+        FragmentManager fm = getSupportFragmentManager();
+        FragmentTransaction ft = fm.beginTransaction();
+        if (mapFragment == null) {
+            mapFragment = new AMapFragment();
+        }
+        ft.add(R.id.activity_main_container, mapFragment);
+        mFragmentList.add(mapFragment);
+        ft.commitAllowingStateLoss();
+        Log.d(TAG, "addMapFragment--->" + mFragmentList.size());
+
+    }
+    public static final String TAG = "MainActivity";
+    private void replaceFragment(Fragment fragment) {
+        FragmentManager fm = getSupportFragmentManager();
+        FragmentTransaction ft = fm.beginTransaction();
+        ft.hide(mapFragment);
+        if (mFragmentList.size() > 1) {
+            if (fragment != mFragmentList.get(1)) {
+                ft.add(R.id.activity_main_container, fragment);
+                mFragmentList.add(fragment);
+            }
+        } else {
+            ft.add(R.id.activity_main_container, fragment);
+            mFragmentList.add(fragment);
+        }
+
+        Log.d(TAG, "replacefragment1--->" + mFragmentList.size());
+        if (mFragmentList.size() == 3) {
+            ft.remove(mFragmentList.get(1));
+            mFragmentList.remove(1);
+        }
+        ft.commitAllowingStateLoss();
+        Log.d(TAG, "replacefragment2--->" + mFragmentList.size());
+
+    }
 }

@@ -271,8 +271,11 @@ public class AMapFragment extends Fragment {
             Type type = new TypeToken<ArrayList<LatLng>>() {}.getType();
             //location集合
             ArrayList<LatLng> locationList = gson.fromJson(latLngListStr, type);
-            mPolyOptions.add(locationList.get(locationList.size() - 1));
-            map.addPolyline(mPolyOptions);
+            if (locationList.size() > 0) {
+                mPolyOptions.add(locationList.get(locationList.size() - 1));
+                map.addPolyline(mPolyOptions);
+            }
+
 
         }
 

@@ -2,23 +2,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="com.bz.app">
 
-    <!-- 允许程序打开网络套接字 -->
     <uses-permission android:name="android.permission.INTERNET"/>
-    <!-- 允许程序访问WiFi网络信息 -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
-    <!-- 允许程序访问CellID或WiFi热点来获取粗略的位置 -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-    <!-- 用于访问GPS定位 -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-    <!-- 用于获取运营商信息，用于支持提供运营商信息相关的接口 -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    <!-- 用于获取wifi的获取权限，wifi信息会用来进行网络定位 -->
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
-    <!-- 用于读取手机当前的状态 -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
-    <!-- 用于写入缓存数据到扩展存储卡 -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <!-- 用于申请调用A-GPS模块 -->
     <uses-permission android:name="android.permission.ACCESS_LOCATION_EXTRA_COMMANDS"/>
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
 
@@ -29,11 +21,6 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity
-            android:name=".activity.MainActivity"
-            android:label="@string/app_name"
-            android:launchMode="singleTask">
-        </activity>
 
         <meta-data
             android:name="com.amap.api.v2.apikey"
@@ -46,36 +33,28 @@
             android:exported="true"
             android:process=":running"/>
 
-        <activity
-            android:name=".activity.HistoryActivity"
-            android:launchMode="singleTask"/>
-        <activity
-            android:name=".activity.StatisticsActivity"
-            android:launchMode="singleTask"/>
-        <activity
-            android:name=".activity.BaseActivity"
-            android:theme="@style/AppTheme"/>
+
         <activity android:name=".activity.RecordDetailsActivity"/>
         <activity
             android:name=".activity.WeatherActivity"
             android:launchMode="singleTask"/>
+
         <activity
-            android:name=".activity.SettingActivity"
-            android:launchMode="singleTask"/>
-        <activity android:name=".activity.PersonalActivity"/>
-        <activity
-            android:name=".Main2Activity"
+            android:name=".activity.MainActivity"
             android:label="@string/title_activity_main2"
+            android:launchMode="singleTask"
             android:theme="@style/AppTheme">
+
+        </activity>
+        <activity android:name=".activity.StartActivity"
+            android:theme="@android:style/Theme.NoTitleBar.Fullscreen" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".ButtonActivity">
-
-        </activity>
+        <activity android:name=".activity.PersonalActivity" />
     </application>
 
 </manifest>

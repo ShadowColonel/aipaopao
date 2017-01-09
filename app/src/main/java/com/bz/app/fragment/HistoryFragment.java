@@ -1,9 +1,14 @@
 package com.bz.app.fragment;
 
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -45,5 +50,26 @@ public class HistoryFragment extends Fragment {
         mHistoryRecycler.setLayoutManager(new LinearLayoutManager(getActivity()));
         mAdapter = new HistoryRecyclerAdapter(list, getActivity());
         mHistoryRecycler.setAdapter(mAdapter);
+
+        initReceiver();
+    }
+
+    private void initReceiver() {
+        IntentFilter filter = new IntentFilter();
+        filter.addAction("com.bz.broadcast.updatelist");
+        ListReceiver receiver = new ListReceiver();
+        LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(getActivity());
+        localBroadcastManager.registerReceiver(receiver, filter);
+    }
+
+    public class ListReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            list.clear();
+            list = mDBAdapter.queryAllRecord();
+            mAdapter.clear();
+            mAdapter.addALl(list);
+        }
     }
 }

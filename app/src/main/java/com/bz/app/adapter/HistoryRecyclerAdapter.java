@@ -30,6 +30,16 @@ public class HistoryRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     private Context mContext;
     private LayoutInflater mInflater;
 
+    public void addALl(List<RunningRecord> data) {
+        historyList.addAll(data);
+        notifyDataSetChanged();
+    }
+
+    public void clear() {
+        historyList.clear();
+        notifyDataSetChanged();
+    }
+
     public HistoryRecyclerAdapter(List<RunningRecord> historyList, Context mContext) {
         this.historyList = historyList;
         this.mContext = mContext;

@@ -23,7 +23,8 @@ public class DBAdapter  {
     public final static int DATABASE_VERSION = 1;  //版本号
     public final static String RECORD_TABLE = "record"; //表名
     //建表语句
-    public final static String RECORD_CREATE_SQL = "CREATE TABLE record (id Integer primary key autoincrement," +
+    public final static String RECORD_CREATE_SQL = "CREATE TABLE record (" +
+            "id Integer primary key autoincrement," +
             " start_point text," +
             " end_point text," +
             " path_line text," +
@@ -111,5 +112,13 @@ public class DBAdapter  {
         }
         Collections.reverse(allRecord);
         return allRecord;
+    }
+
+    /**
+     * 删除一条跑步记录
+     */
+
+    public int deleteRecord(int id) {
+        return db.delete(RECORD_TABLE, "id = ?", new String[]{id + ""});
     }
 }

@@ -72,8 +72,8 @@ public class PersonalActivity extends AppCompatActivity implements View.OnClickL
         SharedPreferences pref = getSharedPreferences("user", MODE_PRIVATE);
         mGenderTx.setText(pref.getString("gender", "男"));
         mAgeTx.setText(pref.getString("age", "18"));
-        mHeightTx.setText(pref.getString("height", "170cm"));
-        mWeightTx.setText(pref.getString("weight", "65kg"));
+        mHeightTx.setText(pref.getString("height", "170"));
+        mWeightTx.setText(pref.getString("weight", "65"));
         mNameTx.setText(pref.getString("name", "username"));
         mPortraitPath = pref.getString("path", "");
         mPortraitImg.setImageURI(Uri.parse(mPortraitPath));
@@ -180,7 +180,7 @@ public class PersonalActivity extends AppCompatActivity implements View.OnClickL
         weightDialog.setOnSaveclickListener(new HWNumberDialog.OnSaveListener() {
             @Override
             public void onSaveClick() {
-                mWeightTx.setText(weightDialog.getNum1Value() + "." + weightDialog.getNum2Value() + " kg");
+                mWeightTx.setText(weightDialog.getNum1Value() + "." + weightDialog.getNum2Value());
                 weightDialog.dismiss();
             }
         });
@@ -204,7 +204,7 @@ public class PersonalActivity extends AppCompatActivity implements View.OnClickL
         heightDialog.setOnSaveclickListener(new HWNumberDialog.OnSaveListener() {
             @Override
             public void onSaveClick() {
-                mHeightTx.setText(heightDialog.getNum1Value() + "." + heightDialog.getNum2Value() + " cm");
+                mHeightTx.setText(heightDialog.getNum1Value() + "." + heightDialog.getNum2Value());
                 heightDialog.dismiss();
             }
         });
@@ -235,8 +235,8 @@ public class PersonalActivity extends AppCompatActivity implements View.OnClickL
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
+    protected void onDestroy() {
+        super.onDestroy();
         SharedPreferences.Editor editor = getSharedPreferences("user", MODE_PRIVATE).edit();
         editor.putString("gender", mGenderTx.getText().toString());
         editor.putString("age", mAgeTx.getText().toString());

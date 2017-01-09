@@ -3,49 +3,60 @@ package com.bz.app.activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.amap.api.maps.AMap;
 import com.amap.api.maps.CameraUpdateFactory;
-import com.amap.api.maps.TextureMapView;
+import com.amap.api.maps.MapView;
 import com.amap.api.maps.model.BitmapDescriptorFactory;
 import com.amap.api.maps.model.LatLng;
 import com.amap.api.maps.model.MarkerOptions;
 import com.amap.api.maps.model.PolylineOptions;
 import com.bz.app.R;
+import com.bz.app.database.DBAdapter;
 import com.bz.app.entity.RunningRecord;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 public class RecordDetailsActivity extends AppCompatActivity {
 
     private AMap aMap;
-    private TextureMapView mMapView;
     private PolylineOptions mPolyOptions;
     private MarkerOptions mStartMarker;
     private MarkerOptions mEndMarker;
+    private RunningRecord record;
+    private MapView mMapView;
 
+    @BindView(R.id.details_duration) TextView mDuration;
+    @BindView(R.id.details_distance) TextView mDistance;
+    @BindView(R.id.details_avg_speed) TextView mAvgSpeed;
+    @BindView(R.id.details_calories) TextView mCalories;
 
-    private TextView mDuration;
-    private TextView mDistance;
-    private TextView mAvgSpeed;
-    private TextView mCalories;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_record_details);
+        ButterKnife.bind(this);
+        mMapView = (MapView) findViewById(R.id.details_map);
+        mMapView.onCreate(savedInstanceState);
 
         Intent intent = getIntent();
         Bundle bundle = intent.getExtras();
-        RunningRecord record = bundle.getParcelable("record");
+        record = bundle.getParcelable("record");
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.setTitle(getCurrentDate(record.getDate()));
@@ -53,18 +64,11 @@ public class RecordDetailsActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         toolbar.setOnMenuItemClickListener(onMenuItemClick);
 
-        mDuration = (TextView) findViewById(R.id.details_duration);
-        mDistance = (TextView) findViewById(R.id.details_distance);
-        mAvgSpeed = (TextView) findViewById(R.id.details_avg_speed);
-        mCalories = (TextView) findViewById(R.id.details_calories);
-        mDistance.setText(record.getDistance());
-        mDuration.setText(record.getDuration());
-        mAvgSpeed.setText(record.getAverageSpeed());
-        mCalories.setText("暂无数据");
+        initData();
+        initMap();
+    }
 
-        mMapView = (TextureMapView) findViewById(R.id.details_map);
-        mMapView.onCreate(savedInstanceState);
-
+    private void initMap() {
         aMap = mMapView.getMap();
         aMap.moveCamera(CameraUpdateFactory.zoomTo(16));
 
@@ -89,7 +93,15 @@ public class RecordDetailsActivity extends AppCompatActivity {
         aMap.addMarker(mEndMarker);
     }
 
-
+    private void initData() {
+        mDistance.setText(record.getDistance());
+        mDuration.setText(record.getDuration());
+        mAvgSpeed.setText(record.getAverageSpeed());
+        SharedPreferences preferences = getSharedPreferences("user", MODE_PRIVATE);
+        String weight = preferences.getString("weight", "0");
+        float cal = (float) (Float.parseFloat(weight) * Float.parseFloat(record.getDistance()) * 1.036);
+        mCalories.setText(cal + "kcal");
+    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -129,13 +141,18 @@ public class RecordDetailsActivity extends AppCompatActivity {
                 .setPositiveButton("是", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-
+                        DBAdapter mAdapter = new DBAdapter(RecordDetailsActivity.this);
+                        mAdapter.open();
+                        mAdapter.deleteRecord(record.getId());
+                        Toast.makeText(RecordDetailsActivity.this, "已删除记录", Toast.LENGTH_SHORT).show();
+                        Intent intent = new Intent("com.bz.broadcast.updatelist");
+                        LocalBroadcastManager.getInstance(RecordDetailsActivity.this).sendBroadcast(intent);
+                        finish();
                     }
                 })
                 .setNegativeButton("否", null)
                 .create()
                 .show();
-
     }
 
 
