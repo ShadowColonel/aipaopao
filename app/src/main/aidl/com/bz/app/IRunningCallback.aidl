@@ -6,4 +6,5 @@ interface IRunningCallback {
 
     void notifyData(float distance, String latLngListStr, String nowLatLngStr);
     void timeUpdate(long time);
+    void notSave();
 }

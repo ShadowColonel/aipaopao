@@ -41,15 +41,6 @@ public class MainActivity extends AppCompatActivity
         toolbar.setTitle("开始跑步");
         setSupportActionBar(toolbar);
 
-//        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-//        fab.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-//                        .setAction("Action", null).show();
-//            }
-//        });
-
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -78,28 +69,6 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-//    @Override
-//    public boolean onCreateOptionsMenu(Menu menu) {
-//        // Inflate the menu; this adds items to the action bar if it is present.
-//        getMenuInflater().inflate(R.menu.action_record, menu);
-//        return true;
-//    }
-//
-//    @Override
-//    public boolean onOptionsItemSelected(MenuItem item) {
-//        // Handle action bar item clicks here. The action bar will
-//        // automatically handle clicks on the Home/Up button, so long
-//        // as you specify a parent activity in AndroidManifest.xml.
-//        int id = item.getItemId();
-//
-//        //noinspection SimplifiableIfStatement
-//        if (id == R.id.action_share) {
-//            return true;
-//        }
-//
-//        return super.onOptionsItemSelected(item);
-//    }
-
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
@@ -108,16 +77,8 @@ public class MainActivity extends AppCompatActivity
 
         if (id == R.id.nav_start) {
             toolbar.setTitle("开始跑步");
-            FragmentManager fm = getSupportFragmentManager();
-            FragmentTransaction ft = fm.beginTransaction();
-            Log.d(TAG, "startrunning1--->" + mFragmentList.size());
-            if (mFragmentList.size() == 2) {
-                ft.remove(mFragmentList.get(1));
-                mFragmentList.remove(1);
-            }
-            Log.d(TAG, "startrunning2--->" + mFragmentList.size());
-            ft.show(mapFragment);
-            ft.commitAllowingStateLoss();
+            replaceFragment(mapFragment);
+
         } else if (id == R.id.nav_data) {
             toolbar.setTitle("数据统计");
             if (mStatisticsFragment == null) {
@@ -126,9 +87,7 @@ public class MainActivity extends AppCompatActivity
             replaceFragment(mStatisticsFragment);
         } else if (id == R.id.nav_history) {
             toolbar.setTitle("历史记录");
-            if (mHistoryFragment == null) {
-                mHistoryFragment = new HistoryFragment();
-            }
+            mHistoryFragment = new HistoryFragment();
             replaceFragment(mHistoryFragment);
         } else if (id == R.id.nav_setting) {
             toolbar.setTitle("设置");
@@ -161,42 +120,36 @@ public class MainActivity extends AppCompatActivity
     private HistoryFragment mHistoryFragment;
     private SettingFragment mSettingFragment;
     private StatisticsFragment mStatisticsFragment;
-    private List<Fragment> mFragmentList = new ArrayList<>();
+    private Fragment currentFragment;
 
     private void addMapFragment() {
-        FragmentManager fm = getSupportFragmentManager();
-        FragmentTransaction ft = fm.beginTransaction();
         if (mapFragment == null) {
             mapFragment = new AMapFragment();
         }
-        ft.add(R.id.activity_main_container, mapFragment);
-        mFragmentList.add(mapFragment);
-        ft.commitAllowingStateLoss();
-        Log.d(TAG, "addMapFragment--->" + mFragmentList.size());
-
+        if (!mapFragment.isAdded()) {
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .add(R.id.activity_main_container, mapFragment)
+                    .commitAllowingStateLoss();
+            currentFragment = mapFragment;
+        }
     }
     public static final String TAG = "MainActivity";
+
     private void replaceFragment(Fragment fragment) {
         FragmentManager fm = getSupportFragmentManager();
         FragmentTransaction ft = fm.beginTransaction();
-        ft.hide(mapFragment);
-        if (mFragmentList.size() > 1) {
-            if (fragment != mFragmentList.get(1)) {
-                ft.add(R.id.activity_main_container, fragment);
-                mFragmentList.add(fragment);
-            }
-        } else {
-            ft.add(R.id.activity_main_container, fragment);
-            mFragmentList.add(fragment);
-        }
 
-        Log.d(TAG, "replacefragment1--->" + mFragmentList.size());
-        if (mFragmentList.size() == 3) {
-            ft.remove(mFragmentList.get(1));
-            mFragmentList.remove(1);
+        if (currentFragment == fragment) {
+            return;
+        }
+        ft.hide(currentFragment);
+        if (!fragment.isAdded()) {
+            ft.add(R.id.activity_main_container, fragment);
+        } else {
+            ft.show(fragment);
         }
         ft.commitAllowingStateLoss();
-        Log.d(TAG, "replacefragment2--->" + mFragmentList.size());
-
+        currentFragment = fragment;
     }
 }

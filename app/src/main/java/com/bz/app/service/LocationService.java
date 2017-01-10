@@ -58,7 +58,6 @@ public class LocationService extends Service implements AMapLocationListener {
 
     private static final String LOG_TAG = "LocationService";
 
-
     @Override
     public IBinder onBind(Intent intent) {
         return stub;
@@ -82,6 +81,7 @@ public class LocationService extends Service implements AMapLocationListener {
         mOption.setInterval(2000);
         mOption.setLocationMode(!mIsRunning ? AMapLocationClientOption.AMapLocationMode.Hight_Accuracy :
                 AMapLocationClientOption.AMapLocationMode.Device_Sensors);
+        Log.d(LOG_TAG, "Mode---->" + mOption.getLocationMode());
         return mOption;
     }
 
@@ -99,6 +99,7 @@ public class LocationService extends Service implements AMapLocationListener {
 
     @Override
     public void onLocationChanged(AMapLocation aMapLocation) {
+        Log.d(LOG_TAG, "onLocationChanged执行啦！！！");
         if (aMapLocation != null) {
             if (aMapLocation.getErrorCode() == 0) {
                 Gson gson = new Gson();
@@ -140,7 +141,7 @@ public class LocationService extends Service implements AMapLocationListener {
 
     //保存到数据库
     protected void saveRecord(String time) {
-        if (list.size() > 0) {
+        if (list.size() > 5) {
             mDBAdapter = new DBAdapter(this);
             mDBAdapter.open();
             LatLng firstLocation = list.get(0);
@@ -148,16 +149,28 @@ public class LocationService extends Service implements AMapLocationListener {
             String startPoint = latLngToString(firstLocation);
             String endPoint = latLngToString(lastLocation);
             String pathLinePoints = getPathLineString(list);
-            //公里
+            //距离：公里
             String distanceStr = df.format(distance / 1000.0);
-            String durationStr = Utils.getTimeStr((int) (mDisplayTime / 1000));
-            //速度:km/min
-            String average_speed = df.format((distance / 1000.0) / (mDisplayTime / 60000));
+            //时间：秒
+            String durationStr = String.valueOf(mDisplayTime / 1000);
+            //速度:min/km
+            String average_speed = null;
+            if (distance != 0) {
+                average_speed = df.format((mDisplayTime / 60000.0) / (distance / 1000.0));
+            } else {
+                average_speed = "0.0";
+            }
             mDBAdapter.insertRecord(startPoint, endPoint, pathLinePoints, distanceStr,
                     durationStr, average_speed, time);
             mDBAdapter.close();
         } else {
-            Log.e(LOG_TAG, "没有记录到数据库");
+            if (mCallback != null) {
+                try {
+                    mCallback.notSave();
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
     }
@@ -165,9 +178,10 @@ public class LocationService extends Service implements AMapLocationListener {
     //将经纬度集合，转换为string
     private String getPathLineString(List<LatLng> list) {
         StringBuffer pathLine = new StringBuffer();
-        for (int i = 1; i < list.size() - 1; i++) {
+        for (int i = 0; i < list.size() - 1; i++) {
             pathLine.append(latLngToString(list.get(i))).append(";");
         }
+        Log.d(LOG_TAG, "list.size===>" + list.size());
         return pathLine.toString();
     }
 
@@ -205,6 +219,8 @@ public class LocationService extends Service implements AMapLocationListener {
         distance = 0f;
         mDelayTime = 0;
         mIsRunning = true; //跑步标志位置为true
+        mLocationClient.setLocationOption(getOption());
+//        mLocationClient.startLocation();
         if (mRecord != null) mRecord = null; //开始跑步  new一个新的跑步记录
         mRecord = new RunningRecord();
         mRecord.setDate(String.valueOf(mStartTime));
@@ -216,6 +232,8 @@ public class LocationService extends Service implements AMapLocationListener {
      */
     private void stopRunning() {
         mIsRunning = false;
+        mLocationClient.setLocationOption(getOption());
+//        mLocationClient.startLocation();
         mIsPause = false;
         saveRecord(mRecord.getDate());
     }
@@ -226,6 +244,8 @@ public class LocationService extends Service implements AMapLocationListener {
      */
     private void onPauseRunning() {
         mIsRunning = false;
+        mLocationClient.setLocationOption(getOption());
+//        mLocationClient.startLocation();
         mIsPause = true;
         mPauseTime = System.currentTimeMillis();
     }
@@ -238,6 +258,8 @@ public class LocationService extends Service implements AMapLocationListener {
      */
     private void onResumeRunning() {
         mIsRunning = true;
+        mLocationClient.setLocationOption(getOption());
+//        mLocationClient.startLocation();
         mTimeHandler.sendEmptyMessage(0);
         mResumeTime = System.currentTimeMillis();
         mDelayTime += mResumeTime - mPauseTime;

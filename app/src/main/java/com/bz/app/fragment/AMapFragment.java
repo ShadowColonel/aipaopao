@@ -15,12 +15,14 @@ import android.os.Message;
 import android.os.RemoteException;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.amap.api.maps.AMap;
@@ -41,6 +43,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 import butterknife.BindView;
@@ -61,6 +64,7 @@ public class AMapFragment extends Fragment {
     private PolylineOptions mPolyOptions; //轨迹
     private IRunning mRunning;//AIDL接口
     private int distance;
+    private DecimalFormat df = new DecimalFormat("0.0");
 
     @BindView(R.id.map_view)
     MapView mMapView;
@@ -145,13 +149,15 @@ public class AMapFragment extends Fragment {
         mResumeBtn.setVisibility(View.VISIBLE);
         mLockBtn.setChecked(true);
     }
-    @OnClick(R.id.running_start) void startRunning() {
+
+    @OnClick(R.id.running_start)
+    void startRunning() {
         mStartView.setVisibility(View.GONE);
         mStopBtn.setVisibility(View.VISIBLE);
         mLockBtn.setVisibility(View.VISIBLE);
         mLockBtn.setChecked(true);
         mPauseBtn.setVisibility(View.VISIBLE);
-
+        initPolyline();
         try {
             mRunning.start();
             mRunning.openNotification();
@@ -161,7 +167,8 @@ public class AMapFragment extends Fragment {
         }
     }
 
-    @OnClick(R.id.fragment_map_stop_btn) void stopRunning() {
+    @OnClick(R.id.fragment_map_stop_btn)
+    void stopRunning() {
         if (mLockBtn.isChecked()) {
             anim();
         } else {
@@ -186,7 +193,8 @@ public class AMapFragment extends Fragment {
         anim.start();
     }
 
-    @OnClick(R.id.fragment_map_pause_btn) void pause() {
+    @OnClick(R.id.fragment_map_pause_btn)
+    void pause() {
         if (mLockBtn.isChecked()) {
             anim();
         } else {
@@ -203,7 +211,8 @@ public class AMapFragment extends Fragment {
         }
     }
 
-    @OnClick(R.id.fragment_map_resume_btn) void resume() {
+    @OnClick(R.id.fragment_map_resume_btn)
+    void resume() {
         mStopBtn.setVisibility(View.VISIBLE);
         mPauseBtn.setVisibility(View.VISIBLE);
         mLockBtn.setVisibility(View.VISIBLE);
@@ -214,6 +223,7 @@ public class AMapFragment extends Fragment {
             e.printStackTrace();
         }
     }
+
     private void initMap() {
         if (map == null) {
             map = mMapView.getMap();
@@ -228,10 +238,9 @@ public class AMapFragment extends Fragment {
     //初始化地图轨迹线
     private void initPolyline() {
         mPolyOptions = new PolylineOptions();
-        mPolyOptions.color(Color.GREEN);
+        mPolyOptions.color(Color.parseColor("#E25910"));
         mPolyOptions.width(10f);
     }
-    
 
     private ServiceConnection connection = new ServiceConnection() {
         @Override
@@ -254,6 +263,7 @@ public class AMapFragment extends Fragment {
         }
     };
 
+    private static final String LOG = "AMapFragment";
     private IRunningCallback callback = new IRunningCallback.Stub() {
         @Override
         public void notifyData(float distance, String latLngListStr, String nowLatLngStr) throws RemoteException {
@@ -261,27 +271,28 @@ public class AMapFragment extends Fragment {
             Gson gson = new Gson();
             //当前定位
             LatLng nowLatLng = gson.fromJson(nowLatLngStr, LatLng.class);
-
             //添加Marker显示定位
             mLocationMarker.setPosition(nowLatLng);
             //每次定位移动到地图中心
             map.moveCamera(CameraUpdateFactory.changeLatLng(nowLatLng));
-
             //跑步轨迹
             Type type = new TypeToken<ArrayList<LatLng>>() {}.getType();
             //location集合
             ArrayList<LatLng> locationList = gson.fromJson(latLngListStr, type);
+            Log.d(LOG, "list.size--->" + locationList.size());
             if (locationList.size() > 0) {
                 mPolyOptions.add(locationList.get(locationList.size() - 1));
                 map.addPolyline(mPolyOptions);
             }
-
-
         }
-
         @Override
         public void timeUpdate(long time) throws RemoteException {
             mTimeHandler.sendEmptyMessage((int) (time / 1000));
+        }
+
+        @Override
+        public void notSave() throws RemoteException {
+            Toast.makeText(getActivity(), "距离太短，无法存入数据库", Toast.LENGTH_SHORT).show();
         }
     };
 
@@ -300,7 +311,7 @@ public class AMapFragment extends Fragment {
         @Override
         public boolean handleMessage(Message msg) {
             mTimeTv.setText(Utils.getTimeStr(msg.what));
-            mSpeedTv.setText(distance / (float) (msg.what) + "m/s");
+            mSpeedTv.setText(df.format(distance / (float) (msg.what)) + "m/s");
             return false;
         }
     });

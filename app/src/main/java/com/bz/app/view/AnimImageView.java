@@ -1,12 +1,10 @@
 package com.bz.app.view;
 
-import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.renderscript.Sampler;
 import android.util.AttributeSet;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.ImageView;

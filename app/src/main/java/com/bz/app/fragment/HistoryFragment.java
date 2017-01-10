@@ -48,7 +48,8 @@ public class HistoryFragment extends Fragment {
         list = mDBAdapter.queryAllRecord();
         mHistoryRecycler = (RecyclerView) view.findViewById(R.id.history_recycler);
         mHistoryRecycler.setLayoutManager(new LinearLayoutManager(getActivity()));
-        mAdapter = new HistoryRecyclerAdapter(list, getActivity());
+        mAdapter = new HistoryRecyclerAdapter(getActivity());
+        mAdapter.addALl(list);
         mHistoryRecycler.setAdapter(mAdapter);
 
         initReceiver();

@@ -33,7 +33,6 @@
             android:exported="true"
             android:process=":running"/>
 
-
         <activity android:name=".activity.RecordDetailsActivity"/>
         <activity
             android:name=".activity.WeatherActivity"
@@ -41,7 +40,7 @@
 
         <activity
             android:name=".activity.MainActivity"
-            android:label="@string/title_activity_main2"
+            android:label="@string/title_activity_main"
             android:launchMode="singleTask"
             android:theme="@style/AppTheme">
 

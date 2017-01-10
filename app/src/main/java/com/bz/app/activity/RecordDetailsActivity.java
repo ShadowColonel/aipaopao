@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
@@ -24,6 +25,7 @@ import com.amap.api.maps.model.PolylineOptions;
 import com.bz.app.R;
 import com.bz.app.database.DBAdapter;
 import com.bz.app.entity.RunningRecord;
+import com.bz.app.utils.Utils;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -74,7 +76,7 @@ public class RecordDetailsActivity extends AppCompatActivity {
 
         //初始化线
         mPolyOptions = new PolylineOptions();
-        mPolyOptions.color(Color.GREEN);
+        mPolyOptions.color(Color.parseColor("#E25910"));
         mPolyOptions.width(10f);
         mPolyOptions.addAll(record.getPathLinePoints());
         LatLng startLatLng = record.getPathLinePoints().get(0);
@@ -93,12 +95,13 @@ public class RecordDetailsActivity extends AppCompatActivity {
         aMap.addMarker(mEndMarker);
     }
 
+    private static final String LOG = "RecordDetailsActivity";
     private void initData() {
         mDistance.setText(record.getDistance());
-        mDuration.setText(record.getDuration());
+        mDuration.setText(Utils.getTimeStr(Integer.parseInt(record.getDuration())));
         mAvgSpeed.setText(record.getAverageSpeed());
         SharedPreferences preferences = getSharedPreferences("user", MODE_PRIVATE);
-        String weight = preferences.getString("weight", "0");
+        String weight = preferences.getString("weight", "65");
         float cal = (float) (Float.parseFloat(weight) * Float.parseFloat(record.getDistance()) * 1.036);
         mCalories.setText(cal + "kcal");
     }

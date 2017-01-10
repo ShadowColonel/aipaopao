@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="48dp"
+              android:background="#ffffff"
+              android:orientation="horizontal">
+    <FrameLayout
+        android:layout_width="48dp"
+        android:gravity="center"
+        android:layout_height="wrap_content">
+        <View
+            android:layout_width="1dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:background="#b6a9a9"/>
+        <ImageView
+            android:layout_width="12dp"
+            android:layout_height="12dp"
+            android:layout_gravity="center"
+            android:src="@drawable/icon03"/>
+    </FrameLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/item_history_date"
+        android:textColor="#6e90ba"
+        android:textSize="16sp"
+        android:layout_gravity="center_vertical"
+        android:text="2016-8-15  周五"/>
+
+</LinearLayout>
